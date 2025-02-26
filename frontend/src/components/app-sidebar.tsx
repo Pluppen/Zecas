@@ -81,6 +81,10 @@ const data = {
       icon: Bot,
       items: [
         {
+          title: "Overview",
+          url: "/project/findings/overview"
+        },
+        {
           title: "Internet Exposure",
           url: "#",
         },

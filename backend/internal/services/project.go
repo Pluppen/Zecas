@@ -60,4 +60,3 @@ func (s *ProjectService) GetFindings(projectID uuid.UUID) ([]models.Finding, err
 		Find(&findings)
 	return findings, result.Error
 }
-
