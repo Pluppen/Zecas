@@ -1,0 +1,92 @@
+// cmd/api/main.go
+package main
+
+import (
+	"log"
+	"os"
+
+	"backend/internal/api"
+	"backend/internal/database"
+	"backend/internal/models"
+	"backend/internal/services"
+
+	"github.com/joho/godotenv"
+)
+
+func main() {
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using environment variables")
+	}
+
+	// Database connection
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://scanuser:scanpass@localhost:5432/scandb?sslmode=disable"
+	}
+
+	db, err := database.Connect(dbURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	// Auto-migrate database
+	if err := database.Migrate(db); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	// RabbitMQ connection
+	rabbitURL := os.Getenv("RABBITMQ_URL")
+	if rabbitURL == "" {
+		rabbitURL = "amqp://guest:guest@localhost:5672/"
+	}
+
+	// Initialize services
+	queueService, err := services.NewQueueService(rabbitURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+	}
+	defer queueService.Close()
+
+	projectService := services.NewProjectService(db)
+	targetService := services.NewTargetService(db)
+	scanService := services.NewScanService(db)
+	findingService := services.NewFindingService(db)
+
+	// Setup findings consumer
+	err = queueService.ConsumeFindings(func(finding models.Finding) error {
+		return findingService.Create(&finding)
+	})
+	if err != nil {
+		log.Fatalf("Failed to set up findings consumer: %v", err)
+	}
+
+	// Setup status updates consumer
+	err = queueService.ConsumeStatusUpdates(func(update services.StatusUpdate) error {
+		return scanService.UpdateStatus(update.ScanID, update.Status)
+	})
+	if err != nil {
+		log.Fatalf("Failed to set up status updates consumer: %v", err)
+	}
+
+	// Setup router
+	router := api.SetupRouter(projectService, targetService, scanService, findingService, queueService)
+
+	// Start server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	// Create and start the server
+	server := api.NewServer(router, port)
+
+	// Start the server (with or without TLS)
+	var serverErr error
+	log.Println("Starting server without TLS...")
+	serverErr = server.Start()
+
+	if serverErr != nil {
+		log.Fatalf("Server error: %v", serverErr)
+	}
+}

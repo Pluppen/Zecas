@@ -1,0 +1,67 @@
+---
+import Page from "@/app/dashboard/page";
+import { Toaster } from "@/components/ui/sonner"
+
+const defualtSidebarOpen = Astro.cookies.get("sidebar:state")?.value === 'true';
+const response = await fetch(import.meta.env.API_URL+'/api/v1/projects');
+const projects = await response.json();
+
+const activeProjectIdParam = Astro.url.searchParams.get("project") || null;
+let activeProjectId: number | null = null
+//try {
+//	if (activeProjectIdParam !== undefined && activeProjectIdParam !== null) {
+//		activeProjectId = Number(activeProjectIdParam);
+//	}
+//} catch {
+//	activeProjectId = null;
+//}
+
+let activeProject = null
+//if(activeProjectId !== null) {
+//	activeProject = projects.filter((project: any) => project.ID === activeProjectId)[0]
+//}
+
+const {breadcrumbL1, breadcrumbL2} = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Astro Basics</title>
+	</head>
+	<body>
+		<Toaster client:load />
+		<Page
+			client:load
+			defualtSidebarOpen={defualtSidebarOpen} 
+			breadcrumbL1={breadcrumbL1 ?? "Scans"}
+			breadcrumbL2={breadcrumbL2 ?? "Results"}
+			projectData={{activeProject, projects}}
+		>
+			<slot />
+		</Page>
+	</body>
+</html>
+
+ 
+<script is:inline>
+	const getThemePreference = () => {
+		if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+			return localStorage.getItem('theme');
+		}
+		return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+	};
+	const isDark = getThemePreference() === 'dark';
+	document.documentElement.classList[isDark ? 'add' : 'remove']('dark');
+ 
+	if (typeof localStorage !== 'undefined') {
+		const observer = new MutationObserver(() => {
+			const isDark = document.documentElement.classList.contains('dark');
+			localStorage.setItem('theme', isDark ? 'dark' : 'light');
+		});
+		observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+	}
+</script>

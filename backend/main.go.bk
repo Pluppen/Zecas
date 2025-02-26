@@ -1,0 +1,194 @@
+// main.go
+package main
+
+import (
+	"encoding/json"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/streadway/amqp"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"log"
+)
+
+type Project struct {
+	gorm.Model
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Targets     []Target `json:"targets"`
+}
+
+type Target struct {
+	gorm.Model
+	ProjectID  uint   `json:"project_id"`
+	IPRanges   string `json:"ip_ranges"`
+	CIDRRanges string `json:"cidr_ranges"`
+	Domains    string `json:"domains"`
+}
+
+type ScanJob struct {
+	TargetID uint   `json:"target_id"`
+	ScanType string `json:"scan_type"` // "nmap", "dnsenum", "shodan"
+}
+
+type App struct {
+	db      *gorm.DB
+	rmq     *amqp.Connection
+	rmqChan *amqp.Channel
+}
+
+func main() {
+	app := &App{}
+
+	log.Printf("Starting")
+
+	// Initialize DB
+	dsn := "host=localhost user=scanuser password=scanpass dbname=scandb port=5432 sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	app.db = db
+
+	// Auto migrate the schema
+	app.db.AutoMigrate(&Project{}, &Target{})
+
+	// Initialize RabbitMQ
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	if err != nil {
+		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+	}
+	defer conn.Close()
+	app.rmq = conn
+
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Fatalf("Failed to open channel: %v", err)
+	}
+	defer ch.Close()
+	app.rmqChan = ch
+
+	// Declare queue
+	_, err = ch.QueueDeclare(
+		"scan_jobs", // queue name
+		true,        // durable
+		false,       // delete when unused
+		false,       // exclusive
+		false,       // no-wait
+		nil,         // arguments
+	)
+	if err != nil {
+		log.Fatalf("Failed to declare queue: %v", err)
+	}
+
+	// Setup router
+	r := gin.Default()
+	r.Use(cors.Default()) // TODO: Make this more strict later on
+
+	app.setupRoutes(r)
+
+	log.Printf("Listening on :8080")
+	r.Run(":8080")
+}
+
+func (app *App) setupRoutes(r *gin.Engine) {
+	api := r.Group("/api")
+	{
+		// Project routes
+		api.GET("/projects", app.listProjects)
+		api.POST("/projects", app.createProject)
+		api.GET("/projects/:id", app.getProject)
+
+		// Scan routes
+		api.POST("/scan", app.queueScan)
+	}
+}
+
+// handlers.go
+func (app *App) updateProject(c *gin.Context) {
+	var project Project
+	if err := c.ShouldBindJSON(&project); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	// TODO
+}
+
+func (app *App) listProjects(c *gin.Context) {
+	var projects []Project
+	result := app.db.Preload("Targets").Find(&projects)
+	if result.Error != nil {
+		c.JSON(500, gin.H{"error": "Failed to fetch projects"})
+		return
+	}
+	c.JSON(200, projects)
+}
+
+func (app *App) createProject(c *gin.Context) {
+	var project Project
+	if err := c.ShouldBindJSON(&project); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	result := app.db.Create(&project)
+	if result.Error != nil {
+		c.JSON(500, gin.H{"error": "Failed to create project"})
+		return
+	}
+
+	c.JSON(201, project)
+}
+
+func (app *App) getProject(c *gin.Context) {
+	id := c.Param("id")
+	var project Project
+
+	result := app.db.Preload("Targets").First(&project, id)
+	if result.Error != nil {
+		c.JSON(404, gin.H{"error": "Project not found"})
+		return
+	}
+
+	c.JSON(200, project)
+}
+
+func (app *App) queueScan(c *gin.Context) {
+	var job ScanJob
+	if err := c.ShouldBindJSON(&job); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Verify target exists
+	var target Target
+	if result := app.db.First(&target, job.TargetID); result.Error != nil {
+		c.JSON(404, gin.H{"error": "Target not found"})
+		return
+	}
+
+	// Convert job to JSON
+	jobBytes, err := json.Marshal(job)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to marshal job"})
+		return
+	}
+
+	// Publish to RabbitMQ
+	err = app.rmqChan.Publish(
+		"",          // exchange
+		"scan_jobs", // routing key
+		false,       // mandatory
+		false,       // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        jobBytes,
+		},
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to queue scan job"})
+		return
+	}
+
+	c.JSON(202, gin.H{"message": "Scan job queued"})
+}

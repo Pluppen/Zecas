@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  #api:
+  #  build: .
+  #  ports:
+  #    - "8080:8080"
+  #  environment:
+  #    - DB_HOST=postgres
+  #    - DB_USER=scanuser
+  #    - DB_PASSWORD=scanpass
+  #    - DB_NAME=scandb
+  #    - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+  #  depends_on:
+  #    - postgres
+  #    - rabbitmq
+
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_USER=scanuser
+      - POSTGRES_PASSWORD=scanpass
+      - POSTGRES_DB=scandb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  postgres_data:

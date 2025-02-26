@@ -1,0 +1,16 @@
+---
+import "@/styles/global.css";
+import Layout from '@/layouts/Layout.astro';
+
+import CreateScanDialog from '@/components/create-scan-dialog';
+import ScansOverviewPage from '@/components/pages/ScansOverviewPage';
+
+---
+
+<Layout breadcrumbL1="Scans" breadcrumbL2="Overview">
+    <div class="w-2/3">
+        <h1>Scans Overview</h1>
+        <CreateScanDialog client:load />
+        <ScansOverviewPage client:load />
+    </div>
+</Layout>

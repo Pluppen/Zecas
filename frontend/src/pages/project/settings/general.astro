@@ -1,0 +1,10 @@
+---
+import "@/styles/global.css";
+import Layout from '@/layouts/Layout.astro';
+import EditProjectForm from '@/components/general-settings-form';
+---
+
+<Layout breadcrumbL1="Settings" breadcrumbL2="General">
+    <h1>General Settings</h1>
+    <EditProjectForm client:load />
+</Layout>
