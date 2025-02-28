@@ -11,6 +11,15 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Command as CommandPrimitive } from "cmdk";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 
 interface MultiSelectProps {
     data: Record<"value" | "label", string>;
@@ -25,8 +34,7 @@ export default function MultiSelect({data, selected, setSelected, placeholder}: 
   const [inputValue, setInputValue] = React.useState("");
 
   const handleUnselect = React.useCallback((listItem) => {
-    let selectedCopy = selected.slice().filter(s => s.value !== listItem.value);
-    setSelected(selectedCopy);
+    setSelected((prev) => prev.filter((s) => s.value !== listItem.value));
   }, []);
 
   const handleKeyDown = React.useCallback(
@@ -35,9 +43,11 @@ export default function MultiSelect({data, selected, setSelected, placeholder}: 
       if (input) {
         if (e.key === "Delete" || e.key === "Backspace") {
           if (input.value === "") {
-            const newSelected = [...selected];
-            newSelected.pop();
-            setSelected(newSelected);
+            setSelected((prev) => {
+              const newSelected = [...prev];
+              newSelected.pop();
+              return newSelected;
+            });
           }
         }
         // This is not a default behaviour of the <input /> field
@@ -109,8 +119,7 @@ export default function MultiSelect({data, selected, setSelected, placeholder}: 
                       }}
                       onSelect={(value) => {
                         setInputValue("");
-                        const newValues = [...selected, listItem]
-                        setSelected(newValues);
+                        setSelected((prev) => [...prev, listItem]);
                       }}
                       className={"cursor-pointer"}
                     >

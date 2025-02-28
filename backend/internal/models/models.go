@@ -53,6 +53,7 @@ const (
 	SeverityMedium   = "medium"
 	SeverityLow      = "low"
 	SeverityInfo     = "info"
+	SeverityUnknown  = "unknown"
 )
 
 // TargetType enum values
@@ -113,17 +114,18 @@ type Scan struct {
 
 // Finding represents a vulnerability or other issue found during scanning
 type Finding struct {
-	ID           uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	ScanID       uuid.UUID `json:"scan_id" gorm:"type:uuid;not null"`
-	TargetID     uuid.UUID `json:"target_id" gorm:"type:uuid;not null"`
-	Title        string    `json:"title" gorm:"type:varchar(255);not null"`
-	Description  string    `json:"description" gorm:"type:text"`
-	Severity     string    `json:"severity" gorm:"type:varchar(20);not null;check:severity IN ('critical', 'high', 'medium', 'low', 'info')"`
-	FindingType  string    `json:"finding_type" gorm:"type:varchar(50);not null"`
-	Details      JSONB     `json:"details" gorm:"type:jsonb;default:'{}'::jsonb"`
-	DiscoveredAt time.Time `json:"discovered_at" gorm:"default:CURRENT_TIMESTAMP"`
-	Verified     bool      `json:"verified" gorm:"default:false"`
-	Fixed        bool      `json:"fixed" gorm:"default:false"`
+	ID           uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	ScanID       *uuid.UUID `json:"scan_id,omitempty" gorm:"type:uuid;"`
+	TargetID     uuid.UUID  `json:"target_id" gorm:"type:uuid;not null"`
+	Title        string     `json:"title" gorm:"type:varchar(255);not null"`
+	Description  string     `json:"description" gorm:"type:text"`
+	Severity     string     `json:"severity" gorm:"type:varchar(20);not null;check:severity IN ('critical', 'high', 'medium', 'low', 'info', 'unknown')"`
+	FindingType  string     `json:"finding_type" gorm:"type:varchar(50);not null"`
+	Details      JSONB      `json:"details" gorm:"type:jsonb;default:'{}'::jsonb"`
+	DiscoveredAt time.Time  `json:"discovered_at" gorm:"default:CURRENT_TIMESTAMP"`
+	Verified     bool       `json:"verified" gorm:"default:false"`
+	Fixed        bool       `json:"fixed" gorm:"default:false"`
+	Manual       bool       `json:"manual" gorm:"default:false"`
 }
 
 // Report represents a generated report for a project

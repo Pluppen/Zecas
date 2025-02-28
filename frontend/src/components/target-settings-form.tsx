@@ -16,11 +16,10 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "./ui/textarea"
 import {isValidCIDR, isValidDomain, isValidIP} from '@/lib/utils'
 import { toast } from "sonner";
 
-import { projects, activeProjectStore, activeProjectIdStore } from "@/lib/projectsStore"
+import { activeProjectStore, activeProjectIdStore } from "@/lib/projectsStore"
 import { useStore } from "@nanostores/react"
 
 import {
@@ -62,7 +61,6 @@ const FormSchema = z.object({
 });
 
 export default function InputForm() {
-  const $activeProject = useStore(activeProjectStore);
   const $activeProjectId = useStore(activeProjectIdStore);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),

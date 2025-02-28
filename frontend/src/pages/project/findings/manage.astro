@@ -2,14 +2,13 @@
 import "@/styles/global.css";
 import Layout from '@/layouts/Layout.astro';
 
-import CreateScanDialog from '@/components/create-scan-dialog';
-import FindingsOverviewPage from '@/components/pages/FindingsOverviewPage';
+import FindingsManagePage from '@/components/pages/FindingsManagePage';
 
 ---
 
 <Layout breadcrumbL1="Findings" breadcrumbL2="Overview">
     <div class="">
         <h1 class="mb-4">Findings Overview</h1>
-        <FindingsOverviewPage client:load />
+        <FindingsManagePage client:load />
     </div>
 </Layout>

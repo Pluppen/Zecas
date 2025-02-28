@@ -85,12 +85,8 @@ const data = {
           url: "/project/findings/overview"
         },
         {
-          title: "Internet Exposure",
-          url: "#",
-        },
-        {
-          title: "Data Exposure",
-          url: "#",
+          title: "Manage",
+          url: "/project/findings/manage",
         },
         {
           title: "Vulnerabilites",

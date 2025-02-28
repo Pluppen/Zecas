@@ -42,6 +42,10 @@ func SetupRouter(
 	// API v1 group
 	v1 := router.Group("/api/v1")
 	{
+		// API v1 group health check point
+		v1.GET("/health", func(c *gin.Context) {
+			c.JSON(200, gin.H{"status": "ok"})
+		})
 		// Projects
 		projects := v1.Group("/projects")
 		{
@@ -102,12 +106,6 @@ func SetupRouter(
 			findings.PUT("/:id/verified/:verified", findingHandler.MarkVerified)
 		}
 	}
-
-	// Serve API documentation if in development mode
-	// Uncomment if you're using Swagger or similar
-	/*
-		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	*/
 
 	return router
 }

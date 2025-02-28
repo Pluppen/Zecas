@@ -27,7 +27,7 @@ export default function FindingsOverviewPage() {
 
     return (
         <div className="mt-8 w-full">
-            <h1>Findings Table</h1>
+            <h1>Findings</h1>
             <div className="grid auto-rows-min gap-4 md:grid-cols-3">
                 <div className="col-span-3">
                     <SimpleTable

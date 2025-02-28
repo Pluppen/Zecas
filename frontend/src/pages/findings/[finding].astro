@@ -1,0 +1,11 @@
+---
+export const prerender = false
+const { finding } = Astro.params;
+
+import Layout from "@/layouts/Layout.astro";
+
+---
+
+<Layout client:load>
+    <h1>{finding}</h1>
+</Layout>

@@ -103,7 +103,7 @@ func (h *FindingHandler) GetFinding(c *gin.Context) {
 // @Router /api/v1/findings [post]
 func (h *FindingHandler) CreateFinding(c *gin.Context) {
 	var input struct {
-		ScanID      string       `json:"scan_id" binding:"required"`
+		ScanID      *string      `json:"scan_id"`
 		TargetID    string       `json:"target_id" binding:"required"`
 		Title       string       `json:"title" binding:"required"`
 		Description string       `json:"description"`
@@ -111,7 +111,11 @@ func (h *FindingHandler) CreateFinding(c *gin.Context) {
 		FindingType string       `json:"finding_type" binding:"required"`
 		Details     models.JSONB `json:"details"`
 		Verified    bool         `json:"verified"`
+		Manual      *bool        `json:"manual"`
 	}
+
+	verified := input.Verified
+	manual := false
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -123,15 +127,28 @@ func (h *FindingHandler) CreateFinding(c *gin.Context) {
 		input.Severity != models.SeverityHigh &&
 		input.Severity != models.SeverityMedium &&
 		input.Severity != models.SeverityLow &&
+		input.Severity != models.SeverityUnknown &&
 		input.Severity != models.SeverityInfo {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid severity level"})
 		return
 	}
 
-	scanID, err := uuid.Parse(input.ScanID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scan ID format"})
-		return
+	var scanID *uuid.UUID
+	if input.ScanID != nil && *input.ScanID != "" {
+		if *input.Manual {
+			id, err := uuid.Parse(*input.ScanID)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scan ID format"})
+				return
+			}
+			scanID = &id
+			manual = true
+			verified = true // Assume verified when manual
+
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "No Scan Id specified"})
+			return
+		}
 	}
 
 	targetID, err := uuid.Parse(input.TargetID)
@@ -148,8 +165,9 @@ func (h *FindingHandler) CreateFinding(c *gin.Context) {
 		Severity:    input.Severity,
 		FindingType: input.FindingType,
 		Details:     input.Details,
-		Verified:    input.Verified,
+		Verified:    verified,
 		Fixed:       false, // Default to not fixed
+		Manual:      manual,
 	}
 
 	err = h.findingService.Create(finding)
