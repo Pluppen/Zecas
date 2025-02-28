@@ -1,14 +1,5 @@
 import { API_URL } from "@/config";
 
-const getScanConfigs = async () => {
-    const response = await fetch(`${API_URL}/api/v1/scan-configs`)
-    if (response.status != 200) {
-        console.error(response.statusText);
-        return {error: "Something went wrong"}
-    }
-    return response.json()
-}
-
 const getProjectFindings = async (projectId: string) => {
     const response = await fetch(`${API_URL}/api/v1/projects/${projectId}/findings`)
     if (response.status != 200) {
@@ -17,21 +8,50 @@ const getProjectFindings = async (projectId: string) => {
     return response.json();
 }
 
-const startNewScan = async (projectId: string, scanConfigId: string, targetIds: string[]) => {
-    const body = {
-        project_id: projectId,
-        scan_config_id: scanConfigId,
-        target_ids: targetIds
+interface CreateFindingParam {
+    target_id: string,
+    title: string,
+    description?: string,
+    severity: string,
+    finding_type: string,
+    details?: string,
+    manual?: boolean,
+    scan_id?: string
+}
+
+const createFinding = async (finding: CreateFindingParam) => {
+    const body: CreateFindingParam = {
+        target_id: finding.target_id,
+        title: finding.title,
+        severity: finding.severity,
+        finding_type: finding.finding_type,
     }
-    const response = await fetch(`${API_URL}/api/v1/scans`, {
+
+    if (finding.description) {
+        body.description = finding.description
+    }
+
+    if (finding.scan_id) {
+        body.scan_id= finding.scan_id
+    }
+
+    if (finding.details) {
+        body.details = finding.details
+    }
+
+    if (finding.manual) {
+        body.manual = finding.manual
+    }
+
+    const response = await fetch(`${API_URL}/api/v1/findings`, {
         method: 'POST',
         body: JSON.stringify(body)
     })
-    if (response.status != 202) {
+    if (response.status != 201) {
         console.error(response.statusText);
         return {error: "Something went wrong"}
     }
     return response.json()
 }
 
-export {getScanConfigs, startNewScan, getProjectFindings}
+export {getProjectFindings, createFinding}

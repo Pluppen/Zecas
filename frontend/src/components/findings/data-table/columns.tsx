@@ -1,5 +1,3 @@
-"use client"
-
 import { type ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, ArrowUpDown, Trash, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -14,16 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import SeverityBadge from "../severity-badge"
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
-export type Payment = {
-  id: string
-  amount: number
-  status: "pending" | "processing" | "success" | "failed"
-  email: string
-}
-
-export const columns: ColumnDef<Payment>[] = [
+export const columns = [
     {
         id: "select",
         header: ({ table }) => (
@@ -81,6 +70,23 @@ export const columns: ColumnDef<Payment>[] = [
     ),
   },
   {
+    accessorKey: "target_value",
+    header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Target
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+    cell: ({row, column}) => (
+      <span className="pl-3">{row.getValue(column.id)}</span>
+    ),
+  },
+  {
     accessorKey: "finding_type",
     header: ({ column }) => {
         return (
@@ -122,24 +128,7 @@ export const columns: ColumnDef<Payment>[] = [
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Has been verified
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        )
-      },
-    cell: ({row, column}) => (
-      <span className="pl-3">{row.getValue(column.id) ? "Yes" : "No"}</span>
-    ),
-  },
-  {
-    accessorKey: "fixed",
-    header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Has been fixed
+            Verified
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )

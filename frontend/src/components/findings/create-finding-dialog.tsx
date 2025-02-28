@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useForm, useWatch } from "react-hook-form"
+import { useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,8 +28,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import { getScanConfigs, startNewScan } from "@/lib/scans";
 import { getProjectTargets } from "@/lib/targets";
+import { createFinding } from "@/lib/findings";
+
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,14 +45,12 @@ import {
 
 const SEVERITIES = [
     "unknown",
-    "informational",
+    "info",
     "low",
     "medium",
     "high",
     "critical"
 ]
-
-const SeverityEnumZod = z.enum(["unknown", "informational", "low", "medium", "high", "critical"])
 
 const NewFindingSchema = z.object({
     title: z.string(),
@@ -63,16 +62,14 @@ const NewFindingSchema = z.object({
     })).min(1, {
         message: "At least 1 target must be selected"
     }),
-    severity: SeverityEnumZod
+    severity: z.string()
 })
 
-export default function CreateFindingDialog () {
+export default function CreateFindingDialog ({setFindings}: {setFindings: SetStateAction}) {
   const $activeProjectId = useStore(activeProjectIdStore);
 
+  const [open, setOpen] = useState(false);
   const [targets, setTargets] = useState([]);
-  const [selectedTargets, setSelectedTargets] = useState([]);
-  const [selectedScanConfig, setSelectedScanConfig] = useState("");
-  const [selectedSeverity, setSelectedSeverity] = useState("unknown");
 
   const form = useForm<z.infer<typeof NewFindingSchema>>({
     resolver: zodResolver(NewFindingSchema),
@@ -91,32 +88,42 @@ export default function CreateFindingDialog () {
   }, [$activeProjectId])
 
   const onSubmit = (data: z.infer<typeof NewFindingSchema>) => {
-    console.log(data);
     if($activeProjectId) {
+        data.targets.forEach(target => {
+            createFinding({
+                title: data.title,
+                description: data.description,
+                finding_type: data.finding_type,
+                target_id: target.value,
+                severity: data.severity,
+                manual: true
+            }).then((result) => {
+                if ("error" in result) {
+                    toast(result.error);
+                    return
+                }
+                setFindings((prev) => [...prev, result]);
+                toast("Added new finding successfully!");
+            });
+        })
+        setOpen(false);
     }
   }
   
-  const formTargets = form.watch("targets");
-  console.log(formTargets);
-
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild className="mt-4">
-        <Button>Add new finding</Button>
+        <Button>Add finding</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Add new finding</DialogTitle>
+          <DialogTitle>Add finding</DialogTitle>
           <DialogDescription>
             Add a new finding manually
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-            <form onSubmit={(event) => {
-                event.preventDefault();
-                form.handleSubmit(onSubmit)()
-                console.log("ABC");
-                }}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                     control={form.control}
                     name="title"
@@ -128,6 +135,7 @@ export default function CreateFindingDialog () {
                             <FormControl>
                                 <Input placeholder="Title of finding" {...field} />
                             </FormControl>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -140,6 +148,7 @@ export default function CreateFindingDialog () {
                                 Description
                             </FormLabel>
                             <Textarea placeholder="Description of finding..." {...field} />
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -154,6 +163,7 @@ export default function CreateFindingDialog () {
                             <FormControl>
                                 <Input placeholder="Type of finding, e.g Vulnerable Service" {...field} />
                             </FormControl>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -163,41 +173,55 @@ export default function CreateFindingDialog () {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Targets</FormLabel>
-                            <MultiSelect
-                                data={targets.map(t => ({value: t.id, label: t.value}))}
-                                placeholder="Select target(s)"
-                                selected={field.value}
-                                setSelected={field.onChange}
-                            />
+                            <FormControl>
+                                <MultiSelect
+                                    data={targets.map(t => ({value: t.id, label: t.value}))}
+                                    placeholder="Select target(s)"
+                                    selected={field.value}
+                                    setSelected={field.onChange}
+                                />
+                            </FormControl>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
-                <FormField>
-                    <Label htmlFor="name">
-                        Severity
-                    </Label>
-                    <Select onValueChange={(value) => setSelectedSeverity(value)} value={selectedSeverity}>
-                        <SelectTrigger className="w-[180px] capitalize">
-                            <SelectValue placeholder="Target Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {SEVERITIES.map(severity => (
-                                <SelectItem
-                                    key={"severity-item-"+severity}
-                                    value={severity}
-                                    className="capitalize"
-                                >
-                                    {severity}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                <FormField
+                    control={form.control}
+                    name="severity"
+                    render={({field}) => (
+                        <FormItem>
+                            <Label htmlFor="name">
+                                Severity
+                            </Label>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger className="w-[180px] capitalize">
+                                        <SelectValue placeholder="Target Type" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <FormMessage />
+                                <SelectContent>
+                                    {SEVERITIES.map(severity => (
+                                        <SelectItem
+                                            key={"severity-item-"+severity}
+                                            value={severity}
+                                            className="capitalize"
+                                        >
+                                            {severity}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </FormItem>
+                    )}
+                />
                 <div>
                     {/* TODO File upload for details / raw data*/}
                 </div>
                 <DialogFooter>
-                    <Button type="submit">Start scan</Button>
+                    <Button type="submit">
+                        Add Finding 
+                    </Button>
                 </DialogFooter>
             </form>
         </Form>

@@ -55,8 +55,8 @@ func (s *ProjectService) GetScans(projectID uuid.UUID) ([]models.Scan, error) {
 // GetFindings returns all findings for a project
 func (s *ProjectService) GetFindings(projectID uuid.UUID) ([]models.Finding, error) {
 	var findings []models.Finding
-	result := s.db.Joins("JOIN scans ON findings.scan_id = scans.id").
-		Where("scans.project_id = ?", projectID).
+	result := s.db.Joins("JOIN targets ON findings.target_id = targets.id").
+		Where("targets.project_id = ?", projectID).
 		Find(&findings)
 	return findings, result.Error
 }
