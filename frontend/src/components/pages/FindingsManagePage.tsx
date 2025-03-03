@@ -8,7 +8,7 @@ import { getProjectTargets } from "@/lib/targets";
 
 import CreateFindingDialog from "@/components/findings/create-finding-dialog";
 
-import { columns } from "../findings/data-table/columns";
+import { getColumns } from "../findings/data-table/columns";
 import { DataTable } from "../findings/data-table/data-table";
 
 export default function FindingsOverviewPage() {
@@ -46,7 +46,7 @@ export default function FindingsOverviewPage() {
             <h1>Findings</h1>
             <CreateFindingDialog setFindings={setFindings} />
             <div className="py-10">
-                <DataTable columns={columns} data={findings.map(f => ({...f, target_value: targetsMap[f.target_id]?.value ?? ""}))} />
+                <DataTable columns={getColumns(setFindings, findings)} data={findings.map(f => ({...f, target_value: targetsMap[f.target_id]?.value ?? ""}))} />
             </div>
         </div>
     );

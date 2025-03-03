@@ -62,15 +62,15 @@ const data = {
           url: "/project/scans/overview",
         },
         {
-          title: "Results",
+          title: "Results #TODO",
           url: "#",
         },
         {
-          title: "Running",
+          title: "Running #TODO",
           url: "#",
         },
         {
-          title: "Blah",
+          title: "Settings #TODO",
           url: "#",
         },
       ],
@@ -81,7 +81,7 @@ const data = {
       icon: Bot,
       items: [
         {
-          title: "Overview",
+          title: "Overview # TODO",
           url: "/project/findings/overview"
         },
         {

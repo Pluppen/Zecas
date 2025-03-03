@@ -54,4 +54,15 @@ const createFinding = async (finding: CreateFindingParam) => {
     return response.json()
 }
 
-export {getProjectFindings, createFinding}
+const removeFinding = async (findingId: string) => {
+    const response = await fetch(`${API_URL}/api/v1/findings/${findingId}`, {
+        method: 'DELETE'
+    })
+    if (response.status != 200) {
+        console.error(response.statusText);
+        return {error: "Something went wrong"}
+    }
+    return response.json()
+}
+
+export {getProjectFindings, createFinding, removeFinding}
