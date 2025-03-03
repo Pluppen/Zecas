@@ -15,9 +15,9 @@ const {breadcrumbL1, breadcrumbL2, breadcrumbL1Href} = Astro.props;
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>Zecas</title>
 	</head>
-	<body>
+	<body id="wrapper">
 		<Toaster client:load />
 		<Page
 			client:load
@@ -32,7 +32,6 @@ const {breadcrumbL1, breadcrumbL2, breadcrumbL1Href} = Astro.props;
 	</body>
 </html>
 
- 
 <script is:inline>
 	const getThemePreference = () => {
 		if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {

@@ -1,0 +1,14 @@
+---
+import { getSession } from 'auth-astro/server';
+
+const session = await getSession(Astro.request)
+
+console.log("Session")
+console.log(session)
+
+if (!session) {
+    Astro.redirect("/login")
+}
+---
+
+<slot />

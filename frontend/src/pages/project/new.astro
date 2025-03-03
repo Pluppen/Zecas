@@ -2,10 +2,14 @@
 import "@/styles/global.css";
 import Layout from '@/layouts/Layout.astro';
 import NewProjectForm from '@/components/new-project-form';
+import AuthWrapper from "@/layouts/AuthWrapper.astro";
+
 ---
 
-<Layout breadcrumbL1="Projects" breadcrumbL2="New Project">
-    <h1>Create new project</h1>
-    <NewProjectForm client:load />
-    <div class="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
-</Layout>
+<AuthWrapper>
+    <Layout breadcrumbL1="Projects" breadcrumbL2="New Project">
+        <h1>Create new project</h1>
+        <NewProjectForm client:load />
+        <div class="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
+    </Layout>
+</AuthWrapper>

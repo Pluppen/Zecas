@@ -1,0 +1,29 @@
+---
+import '@/styles/global.css'
+import { Github } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Zecas</title>
+	</head>
+	<body>
+        <div class="container mx-auto h-full min-h-screen flex justify-center items-center">
+            <Button className="px-4 text-lg" id="github-login">
+                <Github />
+                Github Login
+            </Button>
+        </div> 
+	</body>
+    <script>
+        const { signIn } = await import("auth-astro/client")
+        document.querySelector("#github-login").onclick = () => signIn("github")
+    </script>
+</html>
