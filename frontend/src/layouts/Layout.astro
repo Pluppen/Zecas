@@ -6,22 +6,7 @@ const defualtSidebarOpen = Astro.cookies.get("sidebar:state")?.value === 'true';
 const response = await fetch(import.meta.env.API_URL+'/api/v1/projects');
 const projects = await response.json();
 
-const activeProjectIdParam = Astro.url.searchParams.get("project") || null;
-let activeProjectId: number | null = null
-//try {
-//	if (activeProjectIdParam !== undefined && activeProjectIdParam !== null) {
-//		activeProjectId = Number(activeProjectIdParam);
-//	}
-//} catch {
-//	activeProjectId = null;
-//}
-
-let activeProject = null
-//if(activeProjectId !== null) {
-//	activeProject = projects.filter((project: any) => project.ID === activeProjectId)[0]
-//}
-
-const {breadcrumbL1, breadcrumbL2} = Astro.props;
+const {breadcrumbL1, breadcrumbL2, breadcrumbL1Href} = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -38,8 +23,9 @@ const {breadcrumbL1, breadcrumbL2} = Astro.props;
 			client:load
 			defualtSidebarOpen={defualtSidebarOpen} 
 			breadcrumbL1={breadcrumbL1 ?? "Scans"}
+			breadcrumbL1Href={breadcrumbL1Href ?? "/"}
 			breadcrumbL2={breadcrumbL2 ?? "Results"}
-			projectData={{activeProject, projects}}
+			projectData={{activeProject: null, projects}}
 		>
 			<slot />
 		</Page>

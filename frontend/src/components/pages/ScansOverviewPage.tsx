@@ -51,9 +51,18 @@ export default function ScansOverviewPage() {
                     {
                         key: "scan_config_name",
                         label: "Scan Config Name"
+                    },
+                    {
+                        key: "linkComponent",
+                        label: "Link"
                     }
                 ]}
-                tableRows={scans.map(s => ({...s, short_id: s.id.substring(0, 8),scan_config_name: scanConfigs[s.scan_config_id].name}))}
+                tableRows={scans.map(s => ({
+                    ...s, 
+                    short_id: s.id.substring(0, 8),
+                    scan_config_name: s.scan_config_id in scanConfigs ? scanConfigs[s.scan_config_id].name : "",
+                    linkComponent: <a className="underline hover:cursor-pointer" href={`/scans/${s.id}`}>View Scan</a>
+                }))}
             />
         </div>
     );

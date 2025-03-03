@@ -95,7 +95,7 @@ func (s *PingScanner) Scan(ctx context.Context, target interface{}, params model
 
 	// Create finding
 	finding := models.Finding{
-		ScanID:      uuid.Nil, // Will be set by worker
+		ScanID:      nil,      // Will be set by worker
 		TargetID:    uuid.Nil, // Will be set by worker
 		Title:       fmt.Sprintf("Ping result for %s", targetValue),
 		Description: s.generateDescription(targetValue, outputStr, err != nil),

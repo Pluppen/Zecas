@@ -292,6 +292,33 @@ func (h *ScanHandler) GetScanConfigs(c *gin.Context) {
 	c.JSON(http.StatusOK, configs)
 }
 
+// GetScanConfig returns all scan configurations
+// @Summary Get scan configurations
+// @Description Get all scan configurations
+// @Tags scan-configs
+// @Accept json
+// @Produce json
+// @Param id path string true "Scan Config ID"
+// @Success 200 {array} models.ScanConfig
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/scan-configs [get]
+func (h *ScanHandler) GetScanConfig(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scan ID format"})
+		return
+	}
+
+	config, err := h.scanService.GetScanConfigByID(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve scan configuration"})
+		return
+	}
+
+	c.JSON(http.StatusOK, config)
+}
+
 // CreateScanConfig creates a new scan configuration
 // @Summary Create a scan configuration
 // @Description Create a new scan configuration

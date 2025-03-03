@@ -1,0 +1,27 @@
+---
+import "@/styles/global.css";
+import Layout from "@/layouts/Layout.astro";
+
+import SeverityBadge from "@/components/findings/severity-badge";
+
+const { scanId } = Astro.params;
+import { API_URL } from "@/config";
+
+const scan = await fetch(`${API_URL}/api/v1/scans/${scanId}`).then(res => res.json())
+const scanConfig = await fetch(`${API_URL}/api/v1/scan-configs/${scan.scan_config_id}`).then(res => res.json())
+//const target = await fetch(`${API_URL}/api/v1/targets/${findingData.target_id}`).then(res => res.json())
+---
+
+<Layout client:load breadcrumbL1="Scans" breadcrumbL2={scan.id} breadcrumbL1Href="/project/scans/overview">
+    <div class="container mx-auto mt-8">
+        <h1 class="text-2xl mb-2">Scan Information</h1>
+        <p>Scan ID: <span class="bg-muted px-1">{scan.id}</span></p>
+        <p>Status: <span class="uppercase">{scan.status}</span></p>
+
+        <h2 class="text-xl mt-4">Scan Config</h2>
+        <p>Name: {scanConfig.name}</p>
+        <p>Scanner Type: {scanConfig.scanner_type}</p>
+        <p>Parameters:</p>
+        <pre class="bg-muted p-4 text-wrap">{JSON.stringify(scanConfig.parameters, null, 2)}</pre>
+    </div>
+</Layout>

@@ -87,6 +87,7 @@ func SetupRouter(
 		{
 			scanConfigs.GET("", scanHandler.GetScanConfigs)
 			scanConfigs.POST("", scanHandler.CreateScanConfig)
+			scanConfigs.GET("/:id", scanHandler.GetScanConfig)
 			scanConfigs.PUT("/:id", scanHandler.UpdateScanConfig)
 			scanConfigs.DELETE("/:id", scanHandler.DeleteScanConfig)
 		}

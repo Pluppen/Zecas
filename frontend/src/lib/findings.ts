@@ -8,7 +8,8 @@ const getProjectFindings = async (projectId: string) => {
     return response.json();
 }
 
-interface CreateFindingParam {
+interface FindingParam {
+    id?: string,
     target_id: string,
     title: string,
     description?: string,
@@ -19,8 +20,8 @@ interface CreateFindingParam {
     scan_id?: string
 }
 
-const createFinding = async (finding: CreateFindingParam) => {
-    const body: CreateFindingParam = {
+const createFinding = async (finding: FindingParam) => {
+    const body: FindingParam = {
         target_id: finding.target_id,
         title: finding.title,
         severity: finding.severity,
@@ -54,6 +55,37 @@ const createFinding = async (finding: CreateFindingParam) => {
     return response.json()
 }
 
+const updateFinding = async (finding: FindingParam) => {
+    const body: FindingParam = {
+        target_id: finding.target_id,
+        title: finding.title,
+        severity: finding.severity,
+        finding_type: finding.finding_type,
+    }
+
+    if (finding.description) {
+        body.description = finding.description
+    }
+
+    if (finding.details) {
+        body.details = finding.details
+    }
+
+    if (finding.manual) {
+        body.manual = finding.manual
+    }
+
+    const response = await fetch(`${API_URL}/api/v1/findings/${finding.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(body)
+    })
+    if (response.status != 200) {
+        console.error(response.statusText);
+        return {error: "Something went wrong"}
+    }
+    return response.json()
+}
+
 const removeFinding = async (findingId: string) => {
     const response = await fetch(`${API_URL}/api/v1/findings/${findingId}`, {
         method: 'DELETE'
@@ -65,4 +97,4 @@ const removeFinding = async (findingId: string) => {
     return response.json()
 }
 
-export {getProjectFindings, createFinding, removeFinding}
+export {getProjectFindings, createFinding, removeFinding, updateFinding}

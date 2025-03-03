@@ -62,7 +62,7 @@ func CreateFinding(
 	details models.JSONB,
 ) models.Finding {
 	return models.Finding{
-		ScanID:      scanID,
+		ScanID:      &scanID,
 		TargetID:    targetID,
 		Title:       title,
 		Description: description,

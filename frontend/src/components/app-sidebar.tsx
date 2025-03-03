@@ -61,36 +61,21 @@ const data = {
           title: "Overview",
           url: "/project/scans/overview",
         },
-        {
-          title: "Results #TODO",
-          url: "#",
-        },
-        {
-          title: "Running #TODO",
-          url: "#",
-        },
-        {
-          title: "Settings #TODO",
-          url: "#",
-        },
       ],
     },
     {
       title: "Findings",
       url: "#",
       icon: Bot,
+      isActive: true,
       items: [
         {
-          title: "Overview # TODO",
+          title: "Overview",
           url: "/project/findings/overview"
         },
         {
           title: "Manage",
           url: "/project/findings/manage",
-        },
-        {
-          title: "Vulnerabilites",
-          url: "#",
         },
       ],
     },
@@ -98,6 +83,7 @@ const data = {
       title: "Report",
       url: "#",
       icon: BookOpen,
+      isActive: true,
       items: [
         {
           title: "Edit Report",
@@ -113,6 +99,7 @@ const data = {
       title: "Settings",
       url: "/project/settings/general",
       icon: Settings2,
+      isActive: true,
       items: [
         {
           title: "General",

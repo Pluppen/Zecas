@@ -131,7 +131,7 @@ func (w *Worker) handleScanRequest(request services.ScanRequest) error {
 		// Process findings
 		for i := range findings {
 			// Set scan and target IDs
-			findings[i].ScanID = request.ScanID
+			findings[i].ScanID = &request.ScanID
 			findings[i].TargetID = target.ID
 
 			// Queue finding

@@ -12,6 +12,7 @@ export default function FindingsOverviewPage() {
     const $activeProjectId = useStore(activeProjectIdStore);
     const [findings, setFindings] = useState([]);
     const [scanConfigs, setScanConfigs] = useState({});
+    const [severityCounts, setSeverityCounts] = useState({})
 
     useEffect(() => {
         if($activeProjectId) {
@@ -21,9 +22,52 @@ export default function FindingsOverviewPage() {
                 }
                 console.log(result);
                 setFindings(result);
+                let severityCountsTmp = {...severityCounts}
+                result.forEach(f => {
+                    if (f.severity in severityCountsTmp) {
+                        severityCountsTmp[f.severity] += 1
+                    } else {
+                        severityCountsTmp[f.severity] = 1
+                    }
+                });
+                setSeverityCounts(severityCountsTmp)
             })
         }
     }, [$activeProjectId])
+
+    const chartData = [
+        { severity: "critical", count: severityCounts["critical"] ?? 0, fill: "var(--color-critical)" },
+        { severity: "high", count: severityCounts["high"] ?? 0, fill: "var(--color-high)" },
+        { severity: "medium", count: severityCounts["medium"] ?? 0, fill: "var(--color-medium)" },
+        { severity: "low", count: severityCounts["low"] ?? 0, fill: "var(--color-low)" },
+        { severity: "unknown", count: severityCounts["unknown"] ?? 0, fill: "var(--color-unknown)" },
+    ]
+
+    const chartConfig = {
+        count: {
+            label: "Count",
+        },
+        unknown: {
+            label: "Unknown",
+            color: "hsl(var(--chart-1))",
+        },
+        low: {
+            label: "Low",
+            color: "hsl(var(--chart-2))",
+        },
+        medium: {
+            label: "Medium",
+            color: "hsl(var(--chart-3))",
+        },
+        high: {
+            label: "High",
+            color: "hsl(var(--chart-4))",
+        },
+        critical: {
+            label: "Critical",
+            color: "hsl(var(--chart-5))",
+        },
+    } satisfies ChartConfig
 
     return (
         <div className="mt-8 w-full">
@@ -76,7 +120,7 @@ export default function FindingsOverviewPage() {
                     />
                 </div>
                 <div className="">
-                    <PieChart />
+                    <PieChart chartConfig={chartConfig} chartData={chartData} />
                 </div>
             </div>
         </div>

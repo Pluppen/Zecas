@@ -10,13 +10,12 @@ import SimpleTable from '@/components/simple-table';
 
 ---
 
-<Layout>
+<Layout breadcrumbL1="Projects" breadcrumbL2="Overview">
     <div>
     </div>
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
         <BarChartMixed client:load />
         <RadarChart client:load />
-        <PieChart client:load />
         <SimpleBarChart client:load />
         <div class="col-span-2">
             <SimpleTable

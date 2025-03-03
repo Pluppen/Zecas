@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 
-const SEVERITY_COLOR = {
+export const SEVERITY_COLOR = {
     "unknown": "bg-gray-400 text-white",
     "info": "bg-blue-600 text-white",
     "low": "bg-green-600 text-white",

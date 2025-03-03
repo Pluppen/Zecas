@@ -234,6 +234,7 @@ func (h *FindingHandler) UpdateFinding(c *gin.Context) {
 		// Validate severity
 		if input.Severity != models.SeverityCritical &&
 			input.Severity != models.SeverityHigh &&
+			input.Severity != models.SeverityUnknown &&
 			input.Severity != models.SeverityMedium &&
 			input.Severity != models.SeverityLow &&
 			input.Severity != models.SeverityInfo {

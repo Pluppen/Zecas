@@ -14,6 +14,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import SeverityBadge from "../severity-badge"
 
 import { RemoveItemDialog } from "@/components/remove-item-dialog"
+import EditFindingDialog from "../edit-finding-dialog"
+
 import { removeFinding } from "@/lib/findings"
 
 export const getColumns = (setFindings: any, findings: any) => {
@@ -170,9 +172,20 @@ export const getColumns = (setFindings: any, findings: any) => {
                 <a target="_blank" href={`/findings/${finding.id}`}>View details</a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
+              <div
                 className="hover:cursor-pointer"
-              ><Edit />Edit</DropdownMenuItem>
+              >
+                <EditFindingDialog
+                  finding={finding}
+                  setFindings={setFindings}
+                  findings={findings}
+                  button={
+                    <>
+                      <Edit /> Edit
+                    </>
+                  }
+                />
+              </div>
               <div className="hover:cursor-pointer text-red-500">
                 <RemoveItemDialog
                 handleSubmit={() => {

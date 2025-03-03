@@ -22,6 +22,7 @@ interface Props {
   children: React.ReactNode
   defaultSidebarOpen: boolean
   breadcrumbL1: string
+  breadcrumbL1Href: string
   breadcrumbL2: string
   projectData: {
     activeProject: Project
@@ -60,7 +61,7 @@ export default function Page(props: Props) {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">
+                  <BreadcrumbLink href={props.breadcrumbL1Href}>
                     {props.breadcrumbL1}
                   </BreadcrumbLink>
                 </BreadcrumbItem>
