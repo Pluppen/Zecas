@@ -168,6 +168,8 @@ type StartScanInput struct {
 }
 
 // Auth Related
+// The following models needs to adhere to the following schema https://authjs.dev/getting-started/adapters/pg?framework=next-js#schema
+
 type Tabler interface {
 	TableName() string
 }
