@@ -60,6 +60,14 @@ const FormSchema = z.object({
   path: ["ipAddresses"], // Show error on the first field
 });
 
+function transformTargets(targets: string) {
+  if (targets.split("\n").length < 1) {
+    return []
+  }
+
+  return targets.split("\n").map(t => t.trim()).filter(t => t != "")
+}
+
 export default function InputForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -71,16 +79,13 @@ export default function InputForm() {
 
     function onSubmit(data: z.infer<typeof FormSchema>) {
         let body = {
-            name: data.name,
-            description: data.description,
-            targets: [
-                {
-                    "ip_ranges": data.ipAddresses ? data.ipAddresses.split("\n").join(",") : "",
-                    "cidr_ranges": data.cidrRanges ? data.cidrRanges.split("\n").join(",") : "",
-                    "domains": data.domains ? data.domains.split("\n").join(",") : ""
-                }
-            ]
+          name: data.name,
+          description: data.description,
+          ip_ranges: transformTargets(data.ipAddresses),
+          cidr_ranges: transformTargets(data.cidrRanges),
+          domains: transformTargets(data.domains)
         }
+
         fetch(API_URL+'/api/projects', {
             method: 'POST',
             body: JSON.stringify(body)
