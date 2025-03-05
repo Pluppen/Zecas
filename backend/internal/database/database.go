@@ -4,10 +4,11 @@ package database
 import (
 	"backend/internal/models"
 	"fmt"
+	"log"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
 )
 
 // Connect establishes a connection to the database
@@ -35,6 +36,10 @@ func Migrate(db *gorm.DB) error {
 		&models.Finding{},
 		&models.Report{},
 		&models.ScanTask{},
+		&models.Session{},
+		&models.Account{},
+		&models.VerificationToken{},
+		&models.User{},
 	)
 }
 

@@ -2,13 +2,9 @@
 import "@/styles/global.css";
 import Layout from '@/layouts/Layout.astro';
 import TargetSettingsForm from '@/components/target-settings-form';
-
-import AuthWrapper from "@/layouts/AuthWrapper.astro";
 ---
 
-<AuthWrapper>
-    <Layout breadcrumbL1="Settings" breadcrumbL2="Targets" breadcrumbL1Href="#">
-        <h1>Target Settings</h1>
-        <TargetSettingsForm client:load />
-    </Layout>
-</AuthWrapper>
+<Layout breadcrumbL1="Settings" breadcrumbL2="Targets" breadcrumbL1Href="#">
+    <h1>Target Settings</h1>
+    <TargetSettingsForm client:load />
+</Layout>

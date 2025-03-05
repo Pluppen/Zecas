@@ -27,9 +27,11 @@ import { useStore } from "@nanostores/react";
 import { getScanConfigs, startNewScan } from "@/lib/scans";
 import { getProjectTargets } from "@/lib/targets";
 import { toast } from "sonner";
+import { user } from "@/lib/userStore";
 
 export default function CreateScanDialog () {
   const $activeProjectId = useStore(activeProjectIdStore);
+  const $user = useStore(user);
 
   const [targets, setTargets] = useState([]);
   const [scanConfigs, setScanConfigs] = useState([]);
@@ -37,24 +39,24 @@ export default function CreateScanDialog () {
   const [selectedScanConfig, setSelectedScanConfig] = useState("");
 
   useEffect(() => {
-    getScanConfigs().then(result => {
+    getScanConfigs($user.access_token).then(result => {
         setScanConfigs(result);
     });
-  }, [])
+  }, [$user])
 
   useEffect(() => {
     if ($activeProjectId) {
-      getProjectTargets($activeProjectId).then(targetsData => {
+      getProjectTargets($activeProjectId, $user.access_token).then(targetsData => {
         setTargets(targetsData);
       });
     }
-  }, [$activeProjectId])
+  }, [$activeProjectId, $user])
 
   const handleSubmit = () => {
     const targetList = selectedTargets.map(t => t.value);
 
     if($activeProjectId) {
-        startNewScan($activeProjectId, selectedScanConfig, targetList).then(res => {
+        startNewScan($activeProjectId, selectedScanConfig, targetList, $user.access_token).then(res => {
             if ("error" in res) {
                 toast(res.error);
                 return;

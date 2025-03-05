@@ -28,7 +28,7 @@ export default function Component({chartData, chartConfig}) {
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
         <CardTitle>Findings</CardTitle>
-        <CardDescription>Findings count by seveirty</CardDescription>
+        <CardDescription>Findings count by severity</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer

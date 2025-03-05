@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select"
 
 import { getProjectTargets, createProjectTarget } from "@/lib/targets";
+import { user } from "@/lib/userStore";
 
 const FormSchema = z.object({
   targetType: z.string(),
@@ -62,6 +63,8 @@ const FormSchema = z.object({
 
 export default function InputForm() {
   const $activeProjectId = useStore(activeProjectIdStore);
+  const $user = useStore(user);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {},
@@ -71,7 +74,7 @@ export default function InputForm() {
 
   useEffect(() => {
     if ($activeProjectId) {
-      getProjectTargets($activeProjectId).then(targets => {
+      getProjectTargets($activeProjectId, $user.access_token).then(targets => {
         setTargets(targets);
       });
     }
@@ -91,7 +94,7 @@ export default function InputForm() {
       throw new Error("Something went wrong");
     }
 
-    createProjectTarget($activeProjectId ?? "", data.targetType, targetValue).then(res => {
+    createProjectTarget($activeProjectId ?? "", data.targetType, targetValue, $user.access_token).then(res => {
       if ("err" in res) {
         toast("Something went wrong.")
         return

@@ -2,7 +2,10 @@ package middleware
 
 import (
 	"log"
+	"strings"
 	"time"
+
+	"backend/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,8 +17,6 @@ func CORS() gin.HandlerFunc {
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-
-		log.Println("Cors working as hard as it can")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
@@ -97,21 +98,42 @@ func ErrorHandler() gin.HandlerFunc {
 }
 
 // Authentication middleware (placeholder - would need to be properly implemented)
-func Authentication() gin.HandlerFunc {
+func Authentication(authService *services.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the token from the Authorization header
-		token := c.GetHeader("Authorization")
+		authHeader := c.GetHeader("Authorization")
 
 		// In a real implementation, validate the token here
 		// For now, just check if it exists
-		if token == "" {
+		if authHeader == "" || !strings.Contains(authHeader, "Bearer") {
 			c.JSON(401, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return
 		}
 
-		// Set user ID in context (placeholder - real implementation would extract from token)
-		c.Set("userID", "example-user-id")
+		token := strings.Replace(authHeader, "Bearer ", "", 1)
+
+		session, err := authService.GetBySessionToken(token)
+
+		if err != nil {
+			c.JSON(401, gin.H{"error": "Unauthorized"})
+			c.Abort()
+			return
+		}
+
+		currentTime := time.Now()
+
+		if session.Expires.Before(currentTime) {
+			c.JSON(401, gin.H{"error": "Unauthorized"})
+			c.Abort()
+			return
+		}
+
+		if err != nil || session == nil {
+			c.JSON(403, gin.H{"error": "Forbidden"})
+			c.Abort()
+			return
+		}
 
 		c.Next()
 	}

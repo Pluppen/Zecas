@@ -1,11 +1,11 @@
-import { API_URL } from "@/config";
+import { callAPI } from "@/lib/api";
 
-const getProjectFindings = async (projectId: string) => {
-    const response = await fetch(`${API_URL}/api/v1/projects/${projectId}/findings`)
-    if (response.status != 200) {
-        return {error: "Something went wrong fetching scans for project"};
-    }
-    return response.json();
+const getProjectFindings = async (projectId: string, access_token: string) => {
+    return await callAPI(`/api/v1/projects/${projectId}/findings`, {
+        method: 'GET',
+        access_token,
+        expected_status: 200
+    })
 }
 
 interface FindingParam {
@@ -20,7 +20,7 @@ interface FindingParam {
     scan_id?: string
 }
 
-const createFinding = async (finding: FindingParam) => {
+const createFinding = async (finding: FindingParam, access_token) => {
     const body: FindingParam = {
         target_id: finding.target_id,
         title: finding.title,
@@ -44,18 +44,15 @@ const createFinding = async (finding: FindingParam) => {
         body.manual = finding.manual
     }
 
-    const response = await fetch(`${API_URL}/api/v1/findings`, {
+    return await callAPI("/api/v1/findings", {
         method: 'POST',
-        body: JSON.stringify(body)
+        access_token,
+        body: JSON.stringify(body),
+        expected_status: 201
     })
-    if (response.status != 201) {
-        console.error(response.statusText);
-        return {error: "Something went wrong"}
-    }
-    return response.json()
 }
 
-const updateFinding = async (finding: FindingParam) => {
+const updateFinding = async (finding: FindingParam, access_token) => {
     const body: FindingParam = {
         target_id: finding.target_id,
         title: finding.title,
@@ -75,26 +72,20 @@ const updateFinding = async (finding: FindingParam) => {
         body.manual = finding.manual
     }
 
-    const response = await fetch(`${API_URL}/api/v1/findings/${finding.id}`, {
+    return await callAPI(`/api/v1/findings/${finding.id}`, {
         method: 'PUT',
-        body: JSON.stringify(body)
+        access_token,
+        body: JSON.stringify(body),
+        expected_status: 200
     })
-    if (response.status != 200) {
-        console.error(response.statusText);
-        return {error: "Something went wrong"}
-    }
-    return response.json()
 }
 
-const removeFinding = async (findingId: string) => {
-    const response = await fetch(`${API_URL}/api/v1/findings/${findingId}`, {
-        method: 'DELETE'
-    })
-    if (response.status != 200) {
-        console.error(response.statusText);
-        return {error: "Something went wrong"}
-    }
-    return response.json()
+const removeFinding = async (findingId: string, access_token) => {
+    return await callAPI(`/api/v1/findings/${findingId}`, {
+        method: 'DELETE',
+        access_token,
+        expected_status: 200
+    });
 }
 
 export {getProjectFindings, createFinding, removeFinding, updateFinding}

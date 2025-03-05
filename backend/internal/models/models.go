@@ -166,3 +166,49 @@ type StartScanInput struct {
 	ScanConfigID uuid.UUID   `json:"scan_config_id" binding:"required"`
 	TargetIDs    []uuid.UUID `json:"target_ids,omitempty"`
 }
+
+// Auth Related
+type Tabler interface {
+	TableName() string
+}
+
+type VerificationToken struct {
+	Identifier string    `json:"identifier" gorm:"type:text;primary_key"`
+	Expires    time.Time `json:"expires" gorm:"default:CURRENT_TIMESTAMP"`
+	Token      string    `json:"token" gorm:"type:text;primary_key"`
+}
+
+// TableName overrides the table name used by User to `profiles`
+func (VerificationToken) TableName() string {
+	return "verification_token"
+}
+
+type Account struct {
+	Id                string    `json:"id" gorm:"type:serial;primary_key"`
+	UserId            int       `json:"userId" gorm:"type:int;column:userId"`
+	Type              string    `json:"type" gorm:"type:text"`
+	Provider          string    `json:"provider" gorm:"type:text"`
+	ProviderAccountId string    `json:"providerAccountId" gorm:"type:text;column:providerAccountId"`
+	RefreshToken      string    `json:"refresh_token" gorm:"type:text"`
+	AccessToken       string    `json:"access_token" gorm:"type:text"`
+	ExpiresAt         time.Time `json:"expires_at" gorm:"default:CURRENT_TIMESTAMP"`
+	IdToken           string    `json:"id_token" gorm:"type:text"`
+	Scope             string    `json:"scope" gorm:"type:text"`
+	SessionState      string    `json:"session_state" gorm:"type:text"`
+	TokenType         string    `json:"token_type" gorm:"type:text"`
+}
+
+type Session struct {
+	Id           string    `json:"id" gorm:"type:serial;primary_key"`
+	UserId       int       `json:"userId" gorm:"type:int;column:userId"`
+	Expires      time.Time `json:"expires" gorm:"default:CURRENT_TIMESTAMP"`
+	SessionToken string    `json:"sessionToken" gorm:"type:text;column:sessionToken"`
+}
+
+type User struct {
+	Id            string    `json:"id" gorm:"type:serial;primary_key"`
+	Name          string    `json:"name" gorm:"type:text"`
+	Email         string    `json:"email" gorm:"type:text"`
+	EmailVerified time.Time `json:"emailVerified" gorm:"default:CURRENT_TIMESTAMP;column:emailVerified"`
+	Image         string    `json:"image" gorm:"type:text"`
+}

@@ -24,6 +24,9 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
+import { useStore } from "@nanostores/react"
+import { user } from "@/lib/userStore"
+
 import { ThemeModeToggle } from "./theme-mode-toggle"
 
 // This is sample data.
@@ -131,6 +134,8 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const $activeUser = useStore(user);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -141,7 +146,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <ThemeModeToggle />
-        <NavUser user={data.user} />
+        <NavUser user={$activeUser} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

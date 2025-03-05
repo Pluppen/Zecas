@@ -1,5 +1,6 @@
 import {useState, useEffect} from "react"
 
+import {user} from "@/lib/userStore";
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
@@ -11,22 +12,23 @@ import CreateFindingDialog from "@/components/findings/create-finding-dialog";
 import { getColumns } from "../findings/data-table/columns";
 import { DataTable } from "../findings/data-table/data-table";
 
-export default function FindingsOverviewPage() {
+
+export default function FindingsManagePage() {
     const $activeProjectId = useStore(activeProjectIdStore);
     const [findings, setFindings] = useState([]);
     const [targetsMap, setTargetsMap] = useState({});
+    const $user = useStore(user);
 
     useEffect(() => {
         if($activeProjectId) {
-            getProjectFindings($activeProjectId).then(result => {
+            getProjectFindings($activeProjectId, $user.access_token).then(result => {
                 if ("error" in result) {
                     return
                 }
-                console.log(result);
                 setFindings(result);
             })
 
-            getProjectTargets($activeProjectId).then(result => {
+            getProjectTargets($activeProjectId, $user.access_token).then(result => {
                 if ("error" in result) {
                     return
                 }
@@ -39,7 +41,7 @@ export default function FindingsOverviewPage() {
                 setTargetsMap(targetsMapTmp);
             });
         }
-    }, [$activeProjectId])
+    }, [$activeProjectId, $user])
 
     return (
         <div className="mt-8 container mx-auto ">

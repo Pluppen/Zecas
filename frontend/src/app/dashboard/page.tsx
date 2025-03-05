@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { activeProjectStore, activeProjectIdStore, projects, type Project } from "@/lib/projectsStore"
+import { user, type User } from "@/lib/userStore"
 import { useStore } from "@nanostores/react"
 
 interface Props {
@@ -28,6 +29,7 @@ interface Props {
     activeProject: Project
     projects: Project[]
   }
+  activeUser: User
 }
 
 export default function Page(props: Props) {
@@ -46,6 +48,10 @@ export default function Page(props: Props) {
     activeProjectStore.set(activeProject);
     projects.set({projects: props.projectData.projects});
   }, [$activeProjectId])
+
+  React.useEffect(() => {
+    user.set(props.activeUser);
+  }, [props.activeUser])
 
   return (
     <SidebarProvider>

@@ -1,19 +1,5 @@
-import * as React from "react"
 import { ChevronsUpDown, Plus } from "lucide-react"
-import { useContext } from 'react';
-import { ProjectContext } from "@/lib/ProjectContext";
-import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react"
+import {GalleryVerticalEnd} from "lucide-react"
 
 import {
   DropdownMenu,

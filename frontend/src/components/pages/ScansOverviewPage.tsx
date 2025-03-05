@@ -1,6 +1,7 @@
 import {useState, useEffect} from "react"
 
 import { activeProjectIdStore } from "@/lib/projectsStore";
+import { user } from "@/lib/userStore";
 import { useStore } from "@nanostores/react";
 
 import { getProjectScans, getScanConfigs } from "@/lib/scans";
@@ -9,19 +10,20 @@ import SimpleTable from "@/components/simple-table";
 
 export default function ScansOverviewPage() {
     const $activeProjectId = useStore(activeProjectIdStore);
+    const $user = useStore(user);
     const [scans, setScans] = useState([]);
     const [scanConfigs, setScanConfigs] = useState({});
 
     useEffect(() => {
         if($activeProjectId) {
-            getProjectScans($activeProjectId).then(result => {
+            getProjectScans($activeProjectId, $user.access_token).then(result => {
                 if ("error" in result) {
                     return
                 }
                 setScans(result);
             })
 
-            getScanConfigs().then(result => {
+            getScanConfigs($user.access_token).then(result => {
                 if ("error" in result) {
                     return
                 }
@@ -32,7 +34,7 @@ export default function ScansOverviewPage() {
                 setScanConfigs(scanConfigHT);
             })
         }
-    }, [$activeProjectId])
+    }, [$activeProjectId, $user])
 
     return (
         <div className="mt-8">

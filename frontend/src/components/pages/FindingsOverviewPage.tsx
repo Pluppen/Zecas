@@ -2,6 +2,7 @@ import {useState, useEffect} from "react"
 
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
+import {user} from "@/lib/userStore";
 
 import { getProjectFindings } from "@/lib/findings";
 
@@ -10,17 +11,17 @@ import PieChart from "@/components/pie-chart";
 
 export default function FindingsOverviewPage() {
     const $activeProjectId = useStore(activeProjectIdStore);
+    const $user = useStore(user);
+
     const [findings, setFindings] = useState([]);
-    const [scanConfigs, setScanConfigs] = useState({});
     const [severityCounts, setSeverityCounts] = useState({})
 
     useEffect(() => {
         if($activeProjectId) {
-            getProjectFindings($activeProjectId).then(result => {
+            getProjectFindings($activeProjectId, $user.access_token).then(result => {
                 if ("error" in result) {
                     return
                 }
-                console.log(result);
                 setFindings(result);
                 let severityCountsTmp = {...severityCounts}
                 result.forEach(f => {
@@ -33,7 +34,7 @@ export default function FindingsOverviewPage() {
                 setSeverityCounts(severityCountsTmp)
             })
         }
-    }, [$activeProjectId])
+    }, [$activeProjectId, $user])
 
     const chartData = [
         { severity: "critical", count: severityCounts["critical"] ?? 0, fill: "var(--color-critical)" },

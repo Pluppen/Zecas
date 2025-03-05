@@ -42,6 +42,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { user } from "@/lib/userStore";
 
 const SEVERITIES = [
     "unknown",
@@ -67,6 +68,7 @@ const NewFindingSchema = z.object({
 
 export default function EditFindingDialog ({findings, setFindings, finding, button}: {findings: any, finsetFindings: SetStateAction, finding: any, button: any}) {
   const $activeProjectId = useStore(activeProjectIdStore);
+  const $user = useStore(user);
 
   const [open, setOpen] = useState(false);
   const [targets, setTargets] = useState([]);
@@ -84,11 +86,11 @@ export default function EditFindingDialog ({findings, setFindings, finding, butt
 
   useEffect(() => {
     if ($activeProjectId) {
-      getProjectTargets($activeProjectId).then(targetsData => {
+      getProjectTargets($activeProjectId, $user.access_token).then(targetsData => {
         setTargets(targetsData);
       });
     }
-  }, [$activeProjectId])
+  }, [$activeProjectId, $user])
 
   const onSubmit = (data: z.infer<typeof NewFindingSchema>) => {
     if($activeProjectId) {
@@ -101,7 +103,7 @@ export default function EditFindingDialog ({findings, setFindings, finding, butt
                 target_id: target.value,
                 severity: data.severity,
                 manual: true
-            }).then((result) => {
+            }, $user.access_token).then((result) => {
                 if ("error" in result) {
                     toast(result.error);
                     return

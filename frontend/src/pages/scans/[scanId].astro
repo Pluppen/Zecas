@@ -2,11 +2,8 @@
 import "@/styles/global.css";
 import Layout from "@/layouts/Layout.astro";
 
-import SeverityBadge from "@/components/findings/severity-badge";
-
 const { scanId } = Astro.params;
 import { API_URL } from "@/config";
-import AuthWrapper from "@/layouts/AuthWrapper.astro";
 
 const scan = await fetch(`${API_URL}/api/v1/scans/${scanId}`).then(res => res.json())
 const scanConfig = await fetch(`${API_URL}/api/v1/scan-configs/${scan.scan_config_id}`).then(res => res.json())

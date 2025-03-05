@@ -16,12 +16,14 @@ func SetupRouter(
 	scanService *services.ScanService,
 	findingService *services.FindingService,
 	queueService *services.QueueService,
+	authService *services.AuthService,
 ) *gin.Engine {
 	// Create router with default logger and recovery middleware
 	router := gin.Default()
 
 	// Add custom middleware
 	router.Use(middleware.CORS())
+	router.Use(middleware.Authentication(authService))
 	router.Use(middleware.RequestLogger())
 	router.Use(middleware.ErrorHandler())
 

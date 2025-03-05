@@ -1,37 +1,33 @@
-import { API_URL } from "@/config";
+import { callAPI } from "@/lib/api";
 
-const getScanConfigs = async () => {
-    const response = await fetch(`${API_URL}/api/v1/scan-configs`)
-    if (response.status != 200) {
-        console.error(response.statusText);
-        return {error: "Something went wrong"}
-    }
-    return response.json()
+const getScanConfigs = async (access_token) => {
+    return await callAPI("/api/v1/scan-configs", {
+        method: 'GET',
+        expected_status: 200,
+        access_token
+    })
 }
 
-const getProjectScans = async (projectId: string) => {
-    const response = await fetch(`${API_URL}/api/v1/projects/${projectId}/scans`)
-    if (response.status != 200) {
-        return {error: "Something went wrong fetching scans for project"};
-    }
-    return response.json();
+const getProjectScans = async (projectId: string, access_token) => {
+    return await callAPI(`/api/v1/projects/${projectId}/scans`, {
+        method: 'GET',
+        expected_status: 200,
+        access_token
+    })
 }
 
-const startNewScan = async (projectId: string, scanConfigId: string, targetIds: string[]) => {
+const startNewScan = async (projectId: string, scanConfigId: string, targetIds: string[], access_token) => {
     const body = {
         project_id: projectId,
         scan_config_id: scanConfigId,
         target_ids: targetIds
     }
-    const response = await fetch(`${API_URL}/api/v1/scans`, {
+    return await callAPI("/api/v1/scans", {
         method: 'POST',
-        body: JSON.stringify(body)
+        expected_status: 202,
+        body: JSON.stringify(body),
+        access_token
     })
-    if (response.status != 202) {
-        console.error(response.statusText);
-        return {error: "Something went wrong"}
-    }
-    return response.json()
 }
 
 export {getScanConfigs, startNewScan, getProjectScans}
