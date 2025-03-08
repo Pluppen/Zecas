@@ -29,7 +29,7 @@ export function ProjectSwitcher() {
     const activeProject = $projectData.projects.filter(project => project.id === projectId)[0];
     if (activeProject.id !== undefined) {
       activeProjectIdStore.set(activeProject.id);
-      window.location.href = "/";
+      activeProjectStore.set(activeProject);
     }
   }
 

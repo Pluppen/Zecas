@@ -2,11 +2,13 @@
 import Page from "@/app/dashboard/page";
 import { Toaster } from "@/components/ui/sonner"
 import { getSession } from "auth-astro/server";
+import { extractSessionCookie } from "@/lib/utils";
 
 const session = await getSession(Astro.request);
 
-const cookies = Astro.request.headers.get('cookie').split("; ")
-const sessionToken = cookies.filter((c: string) => c.startsWith("authjs.session-token="))[0].replace("authjs.session-token=", "");
+const sessionToken = extractSessionCookie(Astro);
+
+console.log(sessionToken);
 
 const defualtSidebarOpen = Astro.cookies.get("sidebar:state")?.value === 'true';
 const response = await fetch(import.meta.env.API_URL+'/api/v1/projects', {
@@ -34,7 +36,7 @@ const {breadcrumbL1, breadcrumbL2, breadcrumbL1Href} = Astro.props;
 			client:load
 			defualtSidebarOpen={defualtSidebarOpen} 
 			breadcrumbL1={breadcrumbL1 ?? "Scans"}
-			activeUser={{...session.user, access_token: sessionToken ?? ""}}
+			activeUser={{...session?.user, access_token: sessionToken ?? ""}}
 			breadcrumbL1Href={breadcrumbL1Href ?? "/"}
 			breadcrumbL2={breadcrumbL2 ?? "Results"}
 			projectData={{activeProject: null, projects}}

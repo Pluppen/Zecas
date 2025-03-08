@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input"
 import {isValidCIDR, isValidDomain, isValidIP} from '@/lib/utils'
 import { toast } from "sonner";
 
-import { activeProjectStore, activeProjectIdStore } from "@/lib/projectsStore"
+import { activeProjectIdStore } from "@/lib/projectsStore"
 import { useStore } from "@nanostores/react"
 
 import {
@@ -30,7 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import { getProjectTargets, createProjectTarget } from "@/lib/targets";
+import { createProjectTarget } from "@/lib/api/targets";
+import { getProjectTargets } from "@/lib/api/projects";
 import { user } from "@/lib/userStore";
 
 const FormSchema = z.object({

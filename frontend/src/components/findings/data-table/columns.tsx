@@ -16,7 +16,7 @@ import SeverityBadge from "../severity-badge"
 import { RemoveItemDialog } from "@/components/remove-item-dialog"
 import EditFindingDialog from "../edit-finding-dialog"
 
-import { removeFinding } from "@/lib/findings"
+import { removeFinding } from "@/lib/api/findings"
 
 export const getColumns = (setFindings: any, findings: any) => {
     return [

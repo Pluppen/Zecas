@@ -24,8 +24,8 @@ import MultiSelect from "@/components/multi-select"
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import { getScanConfigs, startNewScan } from "@/lib/scans";
-import { getProjectTargets } from "@/lib/targets";
+import { getScanConfigs, startNewScan } from "@/lib/api/scans";
+import { getProjectTargets } from "@/lib/api/projects";
 import { toast } from "sonner";
 import { user } from "@/lib/userStore";
 

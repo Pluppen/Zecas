@@ -4,7 +4,8 @@ import { activeProjectIdStore } from "@/lib/projectsStore";
 import { user } from "@/lib/userStore";
 import { useStore } from "@nanostores/react";
 
-import { getProjectScans, getScanConfigs } from "@/lib/scans";
+import { getScanConfigs } from "@/lib/api/scans";
+import { getProjectScans } from "@/lib/api/projects";
 
 import SimpleTable from "@/components/simple-table";
 

@@ -1,13 +1,13 @@
 import { API_URL } from "@/config"
 
-export type ApiOptions = {
+type ApiOptions = {
     access_token: string,
     expected_status: number,
     method: string,
     body?: string
 }
 
-export const callAPI = async (path: string, options: ApiOptions) => {
+const callAPI = async (path: string, options: ApiOptions) => {
     const response = await fetch(`${API_URL}${path}`, {
         method: options.method,
         headers: {
@@ -19,4 +19,10 @@ export const callAPI = async (path: string, options: ApiOptions) => {
         return {error: "Something went wrong fetching scans for project"};
     }
     return response.json();
+}
+
+
+export {
+    ApiOptions,
+    callAPI,
 }

@@ -6,26 +6,33 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 const isValidIP = (ip: string) => {
-    // IPv4 validation regex
-    const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
-    if (!ipv4Pattern.test(ip)) return false;
-    
-    return ip.split('.').map(Number).every(num => num >= 0 && num <= 255);
-  };
+  // IPv4 validation regex
+  const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  if (!ipv4Pattern.test(ip)) return false;
   
-  const isValidCIDR = (cidr: string) => {
-    const parts = cidr.split('/');
-    if (parts.length !== 2) return false;
-    
-    const ip = parts[0];
-    const prefix = parseInt(parts[1], 10);
-    
-    return isValidIP(ip) && !isNaN(prefix) && prefix >= 0 && prefix <= 32;
-  };
+  return ip.split('.').map(Number).every(num => num >= 0 && num <= 255);
+};
   
-  const isValidDomain = (domain: string) => {
-    const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/;
-    return domainPattern.test(domain);
-  };
+const isValidCIDR = (cidr: string) => {
+  const parts = cidr.split('/');
+  if (parts.length !== 2) return false;
 
-export {isValidCIDR, isValidDomain, isValidIP}
+  const ip = parts[0];
+  const prefix = parseInt(parts[1], 10);
+
+  return isValidIP(ip) && !isNaN(prefix) && prefix >= 0 && prefix <= 32;
+};
+
+const isValidDomain = (domain: string) => {
+  const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/;
+  return domainPattern.test(domain);
+};
+
+const extractSessionCookie = (astroObj: any) => {
+  const cookies = astroObj.request.headers.get('cookie').split("; ")
+  const sessionToken = cookies.filter((c: string) => c.startsWith("authjs.session-token="))[0].replace("authjs.session-token=", "");
+
+  return sessionToken
+}
+
+export {isValidCIDR, isValidDomain, isValidIP, extractSessionCookie}

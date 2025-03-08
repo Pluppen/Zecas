@@ -2,11 +2,14 @@
 import "@/styles/global.css";
 import Layout from "@/layouts/Layout.astro";
 
-const { scanId } = Astro.params;
-import { API_URL } from "@/config";
+import { extractSessionCookie } from "@/lib/utils";
+import {getScanById, getScanConfigById} from "@/lib/api/scans";
 
-const scan = await fetch(`${API_URL}/api/v1/scans/${scanId}`).then(res => res.json())
-const scanConfig = await fetch(`${API_URL}/api/v1/scan-configs/${scan.scan_config_id}`).then(res => res.json())
+const { scanId } = Astro.params;
+
+const sessionToken = extractSessionCookie(Astro);
+const scan = await getScanById(scanId, sessionToken)
+const scanConfig = await getScanConfigById(scan.scan_config_id, sessionToken);
 //const target = await fetch(`${API_URL}/api/v1/targets/${findingData.target_id}`).then(res => res.json())
 ---
 

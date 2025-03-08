@@ -28,8 +28,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import { getProjectTargets } from "@/lib/targets";
-import { createFinding } from "@/lib/findings";
+import { getProjectTargets } from "@/lib/api/projects";
+import { createFinding } from "@/lib/api/findings";
 
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";

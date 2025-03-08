@@ -4,7 +4,7 @@ import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 import {user} from "@/lib/userStore";
 
-import { getProjectFindings } from "@/lib/findings";
+import { getProjectFindings } from "@/lib/api/projects";
 
 import SimpleTable from "@/components/simple-table";
 import PieChart from "@/components/pie-chart";

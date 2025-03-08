@@ -1,10 +1,18 @@
 import { callAPI } from "@/lib/api";
 
-const getProjectFindings = async (projectId: string, access_token: string) => {
-    return await callAPI(`/api/v1/projects/${projectId}/findings`, {
-        method: 'GET',
+export const getFindings = async (access_token) => {
+    return await callAPI(`/api/v1/findings`, {
+        method: "GET",
         access_token,
         expected_status: 200
+    })
+}
+
+export const getFindingById = async (findingId: string, access_token: string) => {
+    return await callAPI(`/api/v1/findings/${findingId}`, {
+        method: 'GET',
+        expected_status: 200,
+        access_token
     })
 }
 
@@ -20,7 +28,7 @@ interface FindingParam {
     scan_id?: string
 }
 
-const createFinding = async (finding: FindingParam, access_token) => {
+export const createFinding = async (finding: FindingParam, access_token) => {
     const body: FindingParam = {
         target_id: finding.target_id,
         title: finding.title,
@@ -52,7 +60,7 @@ const createFinding = async (finding: FindingParam, access_token) => {
     })
 }
 
-const updateFinding = async (finding: FindingParam, access_token) => {
+export const updateFinding = async (finding: FindingParam, access_token) => {
     const body: FindingParam = {
         target_id: finding.target_id,
         title: finding.title,
@@ -80,12 +88,10 @@ const updateFinding = async (finding: FindingParam, access_token) => {
     })
 }
 
-const removeFinding = async (findingId: string, access_token) => {
+export const removeFinding = async (findingId: string, access_token) => {
     return await callAPI(`/api/v1/findings/${findingId}`, {
         method: 'DELETE',
         access_token,
         expected_status: 200
     });
 }
-
-export {getProjectFindings, createFinding, removeFinding, updateFinding}

@@ -4,8 +4,7 @@ import {user} from "@/lib/userStore";
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import { getProjectFindings } from "@/lib/findings";
-import { getProjectTargets } from "@/lib/targets";
+import { getProjectFindings, getProjectTargets } from "@/lib/api/projects";
 
 import CreateFindingDialog from "@/components/findings/create-finding-dialog";
 

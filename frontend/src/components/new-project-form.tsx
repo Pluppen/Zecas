@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { API_URL } from "@/config"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -18,6 +17,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "./ui/textarea"
 import {isValidCIDR, isValidDomain, isValidIP} from '@/lib/utils'
+
+import { activeProjectIdStore } from "@/lib/projectsStore"
+import { user } from "@/lib/userStore"
+import { createNewProject } from "@/lib/api/projects"
+import { useStore } from "@nanostores/react"
 
 const FormSchema = z.object({
   name: z.string().min(2, {
@@ -69,6 +73,8 @@ function transformTargets(targets: string) {
 }
 
 export default function InputForm() {
+  const $user = useStore(user);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -77,22 +83,21 @@ export default function InputForm() {
     },
   })
 
-    function onSubmit(data: z.infer<typeof FormSchema>) {
-        let body = {
-          name: data.name,
-          description: data.description,
-          ip_ranges: transformTargets(data.ipAddresses),
-          cidr_ranges: transformTargets(data.cidrRanges),
-          domains: transformTargets(data.domains)
-        }
-
-        fetch(API_URL+'/api/projects', {
-            method: 'POST',
-            body: JSON.stringify(body)
-        }).then((res) => res.json()).then(json => {
-            window.location.href = "/?project="+json.ID
-        }).catch(err => console.error(err));     
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    let body = {
+      name: data.name,
+      description: data.description,
+      ip_ranges: transformTargets(data.ipAddresses),
+      cidr_ranges: transformTargets(data.cidrRanges),
+      domains: transformTargets(data.domains)
     }
+
+    createNewProject(JSON.stringify(body), $user.access_token).then((result) => {
+      console.log(result);
+      activeProjectIdStore.set(result.id)
+      window.location.href="/"
+    });
+  }
 
   return (
     <Form {...form}>

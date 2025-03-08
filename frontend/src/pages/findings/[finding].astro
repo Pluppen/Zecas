@@ -1,15 +1,17 @@
 ---
 import "@/styles/global.css";
 import Layout from "@/layouts/Layout.astro";
+import { extractSessionCookie } from "@/lib/utils";
+import {getFindingById} from "@/lib/api/findings";
+import {getTargetById} from "@/lib/api/targets";
 
 import SeverityBadge from "@/components/findings/severity-badge";
 
 const { finding } = Astro.params;
-import { API_URL } from "@/config";
 
-const findingData = await fetch(`${API_URL}/api/v1/findings/${finding}`).then(res => res.json())
-
-const target = await fetch(`${API_URL}/api/v1/targets/${findingData.target_id}`).then(res => res.json())
+const sessionToken = extractSessionCookie(Astro);
+const findingData = await getFindingById(finding, sessionToken);
+const target = await getTargetById(findingData.target_id, sessionToken);
 ---
 
 <Layout client:load breadcrumbL1="Findings" breadcrumbL2={findingData.title} breadcrumbL1Href="/project/findings/manage">

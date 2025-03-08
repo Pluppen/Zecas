@@ -1,15 +1,14 @@
 "use client"
+import {useState, useEffect} from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { API_URL } from "@/config"
 import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -18,8 +17,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "./ui/textarea"
 
-import { activeProjectStore, activeProjectIdStore } from "@/lib/projectsStore"
+import { activeProjectIdStore, projects, activeProjectStore } from "@/lib/projectsStore"
+import { user } from "@/lib/userStore"
 import { useStore } from "@nanostores/react"
+import { getProjectById, updateProject } from "@/lib/api/projects";
+
+import { toast } from "sonner";
 
 const FormSchema = z.object({
   name: z.string().min(2, {
@@ -29,20 +32,63 @@ const FormSchema = z.object({
 })
 
 export default function InputForm() {
-  const $activeProject = useStore(activeProjectStore);
+  const $user = useStore(user);
   const $activeProjectId = useStore(activeProjectIdStore);
+  const $projects = useStore(projects);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: {
-      name: $activeProject?.name,
-      description: $activeProject?.description,
-    },
+    defaultValues: async () => getProjectById($activeProjectId, $user.access_token).then(result => {
+        if ("error" in result) {
+          console.error(result.error);
+          return {
+            name: "",
+            description: ""
+          }
+        }
+        return result
+      })
   })
 
-
-    function onSubmit(data: z.infer<typeof FormSchema>) {
-      // TODO: Add func to edit general settings
+  useEffect(() => {
+    if ($activeProjectId) {
+      getProjectById($activeProjectId, $user.access_token).then(result => {
+        if ("error" in result) {
+          console.error(result.error);
+          form.reset({
+            name: "",
+            description: ""
+          });
+          return
+        }
+        form.reset({
+          name: result.name,
+          description: result.description
+        });
+      });
     }
+  }, [$activeProjectId])
+
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    updateProject($activeProjectId, data.name, data.description, $user.access_token).then(result => {
+      if ("error" in result) {
+        console.error(result.error);
+        toast("Something went wrong.")
+        return
+      }
+      const newProjectsList = $projects.projects.map(p => {
+        if (p.id == result.id) {
+          return result
+        }
+        return p
+      });
+      projects.set({
+        projects: newProjectsList,
+      });
+      activeProjectStore.set(result);
+      toast("Successfully updated project settings")
+    });
+  }
 
   return (
     <Form {...form}>
