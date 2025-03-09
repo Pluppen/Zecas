@@ -68,6 +68,22 @@ export const getTargetFindings = async (targetId: string, access_token: string) 
     return await callAPI(`/api/v1/targets/${targetId}/findings`, {
         access_token,
         expected_status: 200,
-        method: "DELETE"
+        method: "GET"
+    })
+}
+
+export const getTargetServices = async (targetId: string, access_token: string) => {
+    return await callAPI(`/api/v1/targets/${targetId}/services`, {
+        access_token,
+        expected_status: 200,
+        method: "GET"
+    })
+}
+
+export const getTargetRelations = async (targetId: string, access_token: string) => {
+    return await callAPI(`/api/v1/targets/${targetId}/relations`, {
+        access_token,
+        expected_status: 200,
+        method: "GET"
     })
 }

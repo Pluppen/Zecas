@@ -40,6 +40,8 @@ func Migrate(db *gorm.DB) error {
 		&models.Account{},
 		&models.VerificationToken{},
 		&models.User{},
+		&models.TargetRelation{},
+		&models.Service{},
 	)
 }
 

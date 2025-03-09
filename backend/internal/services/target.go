@@ -1,3 +1,4 @@
+// internal/services/target.go
 package services
 
 import (
@@ -75,4 +76,107 @@ func (s *TargetService) CountByProject(projectID uuid.UUID) (int64, error) {
 	var count int64
 	result := s.db.Model(&models.Target{}).Where("project_id = ?", projectID).Count(&count)
 	return count, result.Error
+}
+
+// ----- Target Relations Methods -----
+
+// CreateRelation creates a new target relation
+func (s *TargetService) CreateRelation(relation *models.TargetRelation) error {
+	return s.db.Create(relation).Error
+}
+
+// GetRelationByID returns a specific relation by ID
+func (s *TargetService) GetRelationByID(id uuid.UUID) (*models.TargetRelation, error) {
+	var relation models.TargetRelation
+	result := s.db.First(&relation, id)
+	return &relation, result.Error
+}
+
+// GetRelations returns all relations with optional filtering
+func (s *TargetService) GetRelations(sourceID, destinationID *uuid.UUID, relationType string) ([]models.TargetRelation, error) {
+	var relations []models.TargetRelation
+	query := s.db.Model(&models.TargetRelation{})
+
+	if sourceID != nil {
+		query = query.Where("source_id = ?", sourceID)
+	}
+
+	if destinationID != nil {
+		query = query.Where("destination_id = ?", destinationID)
+	}
+
+	if relationType != "" {
+		query = query.Where("relation_type = ?", relationType)
+	}
+
+	result := query.Find(&relations)
+	return relations, result.Error
+}
+
+// DeleteRelation deletes a relation
+func (s *TargetService) DeleteRelation(id uuid.UUID) error {
+	return s.db.Delete(&models.TargetRelation{}, id).Error
+}
+
+// GetRelatedTargets returns all targets related to a specific target
+func (s *TargetService) GetRelatedTargets(targetID uuid.UUID, relationType string) ([]models.Target, error) {
+	var targets []models.Target
+
+	// Get targets where the specified target is the source
+	query := s.db.Joins("JOIN target_relations ON targets.id = target_relations.destination_id").
+		Where("target_relations.source_id = ?", targetID)
+
+	if relationType != "" {
+		query = query.Where("target_relations.relation_type = ?", relationType)
+	}
+
+	if err := query.Find(&targets).Error; err != nil {
+		return nil, err
+	}
+
+	// Get targets where the specified target is the destination
+	query = s.db.Joins("JOIN target_relations ON targets.id = target_relations.source_id").
+		Where("target_relations.destination_id = ?", targetID)
+
+	if relationType != "" {
+		query = query.Where("target_relations.relation_type = ?", relationType)
+	}
+
+	var additionalTargets []models.Target
+	if err := query.Find(&additionalTargets).Error; err != nil {
+		return nil, err
+	}
+
+	// Combine results
+	targets = append(targets, additionalTargets...)
+
+	return targets, nil
+}
+
+// BulkCreateRelations creates multiple target relations at once
+func (s *TargetService) BulkCreateRelations(relations []models.TargetRelation) error {
+	if len(relations) == 0 {
+		return nil
+	}
+	return s.db.Create(&relations).Error
+}
+
+// GetTargetsByValue searches for targets by value pattern
+func (s *TargetService) GetTargetsByValue(valuePattern string, targetType string) ([]models.Target, error) {
+	var targets []models.Target
+	query := s.db.Model(&models.Target{}).Where("value LIKE ?", "%"+valuePattern+"%")
+
+	if targetType != "" {
+		query = query.Where("target_type = ?", targetType)
+	}
+
+	result := query.Find(&targets)
+	return targets, result.Error
+}
+
+// GetServices returns all services for a specific target
+func (s *TargetService) GetServices(targetID uuid.UUID) ([]models.Service, error) {
+	var services []models.Service
+	result := s.db.Where("target_id = ?", targetID).Find(&services)
+	return services, result.Error
 }

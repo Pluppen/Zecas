@@ -4,16 +4,20 @@ import {
   BookOpen,
   Bot,
   Command,
+  ComputerIcon,
   Frame,
   GalleryVerticalEnd,
+  LayoutDashboard,
   Map,
   PieChart,
+  Radar,
   Settings2,
+  ShieldAlert,
   SquareTerminal,
+  Target,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import { ProjectSwitcher } from "@/components/project-switcher"
 import {
@@ -36,28 +40,11 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  teams: [
-    {
-      name: "Pentest",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Attack Surface Assessment",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Iver Sverige",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
-      title: "Scans",
-      url: "/project/scans/overview",
-      icon: SquareTerminal,
+      title: "Dashboard",
+      url: "/project/dashboard",
+      icon: LayoutDashboard,
       isActive: true,
       items: [
         {
@@ -67,9 +54,37 @@ const data = {
       ],
     },
     {
+      title: "Scans",
+      url: "/project/scans/overview",
+      icon: Radar,
+      isActive: true,
+      items: [
+        {
+          title: "Overview",
+          url: "/project/scans/overview",
+        },
+      ],
+    },
+    {
+      title: "Targets",
+      url: "/project/targets/overview",
+      icon: Target,
+      isActive: true,
+      items: [
+        {
+          title: "Overview",
+          url: "/project/targets/overview",
+        },
+        {
+          title: "Services",
+          url: "/project/targets/services",
+        },
+      ],
+    },
+    {
       title: "Findings",
       url: "#",
-      icon: Bot,
+      icon: ShieldAlert,
       isActive: true,
       items: [
         {
@@ -102,7 +117,7 @@ const data = {
       title: "Settings",
       url: "/project/settings/general",
       icon: Settings2,
-      isActive: true,
+      isActive: false,
       items: [
         {
           title: "General",

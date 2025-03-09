@@ -53,6 +53,8 @@ func main() {
 	scanService := services.NewScanService(db)
 	findingService := services.NewFindingService(db)
 	authService := services.NewAuthService(db)
+	serviceService := services.NewServiceService(db)
+	relationService := services.NewRelationService(db)
 
 	// Setup findings consumer
 	err = queueService.ConsumeFindings(func(finding models.Finding) error {
@@ -70,8 +72,31 @@ func main() {
 		log.Fatalf("Failed to set up status updates consumer: %v", err)
 	}
 
+	err = queueService.ConsumeTargets(func(target models.Target) error {
+		return targetService.Create(&target)
+	})
+	if err != nil {
+		log.Fatalf("Failed to set up targets consumer: %v", err)
+	}
+
+	// Setup relations consumer
+	err = queueService.ConsumeTargetRelations(func(relation models.TargetRelation) error {
+		return relationService.Create(&relation)
+	})
+	if err != nil {
+		log.Fatalf("Failed to set up relations consumer: %v", err)
+	}
+
+	// Setup services consumer
+	err = queueService.ConsumeServices(func(service models.Service) error {
+		return serviceService.Create(&service)
+	})
+	if err != nil {
+		log.Fatalf("Failed to set up services consumer: %v", err)
+	}
+
 	// Setup router
-	router := api.SetupRouter(projectService, targetService, scanService, findingService, queueService, authService)
+	router := api.SetupRouter(projectService, targetService, scanService, findingService, queueService, authService, serviceService, relationService)
 
 	// Start server
 	port := os.Getenv("PORT")

@@ -18,11 +18,22 @@ type Scanner interface {
 	// ConvertTarget converts a database target model to a scanner-specific target
 	ConvertTarget(target models.Target) interface{}
 
+	// ConvertService optionally converts a database service model to a scanner-specific service format
+	// Returns nil if the scanner doesn't support scanning services
+	ConvertService(service models.Service) interface{}
+
 	// Scan performs the actual scanning operation
-	Scan(ctx context.Context, target interface{}, params models.JSONB) ([]models.Finding, error)
+	// The target parameter can be either a target or a service
+	Scan(ctx context.Context, target interface{}, params models.JSONB) (*models.ScanResults, error)
 
 	// Type returns the scanner type identifier
 	Type() string
+
+	// SupportsTargetType indicates whether this scanner can handle the specified target type
+	SupportsTargetType(targetType string) bool
+
+	// SupportsServices indicates whether this scanner can scan services
+	SupportsServices() bool
 }
 
 // Registry stores and provides access to scanner implementations
@@ -55,6 +66,7 @@ func (r *Registry) Get(name string) (Scanner, error) {
 func CreateFinding(
 	scanID uuid.UUID,
 	targetID uuid.UUID,
+	serviceID *uuid.UUID,
 	title string,
 	description string,
 	severity string,
@@ -64,6 +76,7 @@ func CreateFinding(
 	return models.Finding{
 		ScanID:      &scanID,
 		TargetID:    targetID,
+		ServiceID:   serviceID,
 		Title:       title,
 		Description: description,
 		Severity:    severity,

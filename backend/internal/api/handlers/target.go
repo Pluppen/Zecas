@@ -319,3 +319,31 @@ func (h *TargetHandler) GetTargetFindings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, findings)
 }
+
+// GetTargetServices returns all services for a specific target
+// @Summary Get target services
+// @Description Get all services for a specific target
+// @Tags targets
+// @Accept json
+// @Produce json
+// @Param id path string true "Target ID"
+// @Success 200 {array} models.Finding
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/targets/{id}/services [get]
+func (h *TargetHandler) GetTargetServices(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid target ID format"})
+		return
+	}
+
+	services, err := h.targetService.GetServices(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve services"})
+		return
+	}
+
+	c.JSON(http.StatusOK, services)
+}

@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  #worker:
+  #  build:
+  #    context: .
+  #    dockerfile: worker.Dockerfile
+  #  environment:
+  #    - DB_HOST=postgres
+  #    - DB_USER=scanuser
+  #    - DB_PASSWORD=scanpass
+  #    - DB_NAME=scandb
+  #    - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+  #  depends_on:
+  #    - postgres
+  #    - rabbitmq
+
   #api:
   #  build: .
   #  ports:

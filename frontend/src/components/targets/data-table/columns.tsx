@@ -11,15 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
-import SeverityBadge from "../severity-badge"
 
-import { RemoveItemDialog } from "@/components/remove-item-dialog"
-import EditFindingDialog from "../edit-finding-dialog"
-
-import { removeFinding } from "@/lib/api/findings"
+import { deleteTargetById } from "@/lib/api/targets"
 import { user } from "@/lib/userStore"
 
-export const getColumns = (setFindings: any, findings: any) => {
+import { RemoveItemDialog } from "@/components/remove-item-dialog"
+
+export const getColumns = (setTargets: any, targets: any) => {
     return [
       {
           id: "select",
@@ -44,41 +42,7 @@ export const getColumns = (setFindings: any, findings: any) => {
           enableHiding: false,
         },
     {
-      accessorKey: "severity",
-      cell: ({row, column}) => (
-        <SeverityBadge severity={row.getValue(column.id)} className="capitalize ml-3" />
-      ),
-      header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-              Severity
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-          )
-        },
-    },
-    {
-      accessorKey: "title",
-      header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-              Title
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-          )
-        },
-      cell: ({row, column}) => (
-        <span className="pl-3">{row.getValue(column.id)}</span>
-      ),
-    },
-    {
-      accessorKey: "target_value",
+      accessorKey: "value",
       header: ({ column }) => {
           return (
             <Button
@@ -95,31 +59,65 @@ export const getColumns = (setFindings: any, findings: any) => {
       ),
     },
     {
-      accessorKey: "finding_type",
+      accessorKey: "target_type",
       header: ({ column }) => {
           return (
             <Button
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             >
-              Finding Type
+                Type
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
           )
         },
       cell: ({row, column}) => (
-        <span className="capitalize pl-3">{row.getValue(column.id)}</span>
+        <span className="pl-3 uppercase">{row.getValue(column.id)}</span>
       ),
     },
     {
-      accessorKey: "discovered_at",
+      accessorKey: "findings",
       header: ({ column }) => {
           return (
             <Button
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             >
-              Time Generated
+                Findings
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          )
+        },
+      cell: ({row, column}) => (
+        <span className="pl-3 uppercase">{row.getValue(column.id).length}</span>
+      ),
+    },
+    {
+      accessorKey: "services",
+      header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Services
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          )
+        },
+      cell: ({row, column}) => (
+        <span className="pl-3 uppercase">{row.getValue(column.id).length}</span>
+      ),
+    },
+    {
+      accessorKey: "updated_at",
+      header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              Updated
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
           )
@@ -129,26 +127,26 @@ export const getColumns = (setFindings: any, findings: any) => {
       ),
     },
     {
-      accessorKey: "verified",
+      accessorKey: "created_at",
       header: ({ column }) => {
           return (
             <Button
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             >
-              Verified
+                Created
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
           )
         },
       cell: ({row, column}) => (
-        <span className="pl-3">{row.getValue(column.id) ? "Yes" : "No"}</span>
+        <span className="pl-3">{new Date(row.getValue(column.id)).toLocaleString()}</span>
       ),
     },
     {
       id: "actions",
       cell: ({ row }) => {
-        const finding = row.original
+        const target = row.original
   
         return (
           <DropdownMenu>
@@ -163,42 +161,28 @@ export const getColumns = (setFindings: any, findings: any) => {
               <DropdownMenuItem
                 className="hover:cursor-pointer"
                 onClick={() => {
-                  navigator.clipboard.writeText(finding.id)
+                  navigator.clipboard.writeText(target.id)
                   toast("Copied finding ID to clipboard")
                 }}
               >
-                Copy finding ID
+                Copy target ID
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <a target="_blank" href={`/findings/${finding.id}`}>View details</a>
+                <a target="_blank" href={`/targets/${target.id}`}>View details</a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <div
-                className="hover:cursor-pointer"
-              >
-                <EditFindingDialog
-                  finding={finding}
-                  setFindings={setFindings}
-                  findings={findings}
-                  button={
-                    <>
-                      <Edit /> Edit
-                    </>
-                  }
-                />
-              </div>
               <div className="hover:cursor-pointer text-red-500">
                 <RemoveItemDialog
-                handleSubmit={() => {
-                  const $user = user.get()
-                  removeFinding(finding.id, $user.access_token).then(result => {
-                    if ("error" in result) {
-                      toast(result.error);
-                    }
-                    const findingsTmp = [...findings].filter(f => f.id !== finding.id);
-                    setFindings(findingsTmp);
-                    toast(result.message);
-                  })
+                handleSubmit={async () => {
+                  const $user = user.get();
+                  const result = await deleteTargetById(target.id, $user.access_token);
+                  if ("error" in result) {
+                    toast("Failed to remove target");
+                    return;
+                  }
+                  const tmpTargets = targets.slice().filter(t => t.id !== target.id);
+                  setTargets(tmpTargets);
+                  toast("Successfully removed target");
                 }}
                   button={
                     <>

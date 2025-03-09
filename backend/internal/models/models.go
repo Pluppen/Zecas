@@ -63,6 +63,14 @@ const (
 	TargetTypeDomain = "domain"
 )
 
+// TargetRelationType enum values
+const (
+	RelationResolvesTo   = "resolves_to"
+	RelationParentOf     = "parent_of"
+	RelationChildOf      = "child_of"
+	RelationHostsService = "hosts_service"
+)
+
 // Project represents a scanning project
 type Project struct {
 	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
@@ -76,14 +84,50 @@ type Project struct {
 
 // Target represents an individual target for scanning (IP, CIDR, or domain)
 type Target struct {
-	ID         uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	ProjectID  uuid.UUID `json:"project_id" gorm:"type:uuid;not null"`
-	TargetType string    `json:"target_type" gorm:"type:varchar(20);not null;check:target_type IN ('ip', 'cidr', 'domain')"`
-	Value      string    `json:"value" gorm:"type:text;not null"`
-	Metadata   JSONB     `json:"metadata" gorm:"type:jsonb;default:'{}'::jsonb"`
-	Findings   []Finding `json:"findings,omitempty" gorm:"foreignKey:TargetID"`
-	CreatedAt  time.Time `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt  time.Time `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
+	ID          uuid.UUID        `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	ProjectID   uuid.UUID        `json:"project_id" gorm:"type:uuid;not null"`
+	TargetType  string           `json:"target_type" gorm:"type:varchar(20);not null;check:target_type IN ('ip', 'cidr', 'domain', 'subdomain')"`
+	Value       string           `json:"value" gorm:"type:text;not null"`
+	Metadata    JSONB            `json:"metadata" gorm:"type:jsonb;default:'{}'::jsonb"`
+	Findings    []Finding        `json:"findings,omitempty" gorm:"foreignKey:TargetID"`
+	Services    []Service        `json:"services,omitempty" gorm:"foreignKey:TargetID"`
+	RelatedFrom []TargetRelation `json:"related_from,omitempty" gorm:"foreignKey:SourceID"`
+	RelatedTo   []TargetRelation `json:"related_to,omitempty" gorm:"foreignKey:DestinationID"`
+	CreatedAt   time.Time        `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt   time.Time        `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
+}
+
+// TargetRelation represents a relationship between two targets
+type TargetRelation struct {
+	ID            uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	SourceID      uuid.UUID `json:"source_id" gorm:"type:uuid;not null"`
+	DestinationID uuid.UUID `json:"destination_id" gorm:"type:uuid;not null"`
+	RelationType  string    `json:"relation_type" gorm:"type:varchar(50);not null"`
+	Metadata      JSONB     `json:"metadata" gorm:"type:jsonb;default:'{}'::jsonb"`
+	CreatedAt     time.Time `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt     time.Time `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
+
+	Source      Target `json:"-" gorm:"foreignKey:SourceID"`
+	Destination Target `json:"-" gorm:"foreignKey:DestinationID"`
+}
+
+// Service represents a service running on a target
+type Service struct {
+	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	TargetID    uuid.UUID `json:"target_id" gorm:"type:uuid;not null"`
+	Port        int       `json:"port" gorm:"not null"`
+	Protocol    string    `json:"protocol" gorm:"type:varchar(20);not null"`
+	ServiceName string    `json:"service_name" gorm:"type:varchar(100)"`
+	Version     string    `json:"version" gorm:"type:varchar(100)"`
+	Title       string    `json:"title" gorm:"type:varchar(255)"`
+	Description string    `json:"description" gorm:"type:text"`
+	Banner      string    `json:"banner" gorm:"type:text"`
+	RawInfo     JSONB     `json:"raw_info" gorm:"type:jsonb;default:'{}'::jsonb"`
+	Findings    []Finding `json:"findings,omitempty" gorm:"foreignKey:ServiceID"`
+	CreatedAt   time.Time `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt   time.Time `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
+
+	Target Target `json:"-" gorm:"foreignKey:TargetID"`
 }
 
 // ScanConfig represents a reusable scan configuration
@@ -117,6 +161,7 @@ type Finding struct {
 	ID           uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	ScanID       *uuid.UUID `json:"scan_id,omitempty" gorm:"type:uuid;"`
 	TargetID     uuid.UUID  `json:"target_id" gorm:"type:uuid;not null"`
+	ServiceID    *uuid.UUID `json:"service_id,omitempty" gorm:"type:uuid;"`
 	Title        string     `json:"title" gorm:"type:varchar(255);not null"`
 	Description  string     `json:"description" gorm:"type:text"`
 	Severity     string     `json:"severity" gorm:"type:varchar(20);not null;check:severity IN ('critical', 'high', 'medium', 'low', 'info', 'unknown')"`
@@ -126,6 +171,9 @@ type Finding struct {
 	Verified     bool       `json:"verified" gorm:"default:false"`
 	Fixed        bool       `json:"fixed" gorm:"default:false"`
 	Manual       bool       `json:"manual" gorm:"default:false"`
+
+	Target  Target   `json:"-" gorm:"foreignKey:TargetID"`
+	Service *Service `json:"-" gorm:"foreignKey:ServiceID"`
 }
 
 // Report represents a generated report for a project
@@ -165,6 +213,15 @@ type StartScanInput struct {
 	ProjectID    uuid.UUID   `json:"project_id" binding:"required"`
 	ScanConfigID uuid.UUID   `json:"scan_config_id" binding:"required"`
 	TargetIDs    []uuid.UUID `json:"target_ids,omitempty"`
+	ServiceIDs   []uuid.UUID `json:"service_ids,omitempty"`
+}
+
+// ScanResults represents the output of a scan with possible new targets and relations
+type ScanResults struct {
+	Findings        []Finding        `json:"findings"`
+	NewTargets      []Target         `json:"new_targets,omitempty"`
+	TargetRelations []TargetRelation `json:"target_relations,omitempty"`
+	Services        []Service        `json:"services,omitempty"`
 }
 
 // Auth Related

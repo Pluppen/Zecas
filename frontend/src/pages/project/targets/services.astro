@@ -1,0 +1,12 @@
+---
+import "@/styles/global.css";
+import Layout from '@/layouts/Layout.astro';
+import ServicesOverviewPage from "@/components/pages/ServicesOverviewPage";
+---
+
+<Layout breadcrumbL1="Services" breadcrumbL2="Overview" breadcrumbL1Href="/project/findings/overview">
+    <div class="">
+        <h1 class="mb-4">Services</h1>
+        <ServicesOverviewPage client:load />
+    </div>
+</Layout>

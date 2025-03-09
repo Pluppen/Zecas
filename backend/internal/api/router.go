@@ -17,6 +17,8 @@ func SetupRouter(
 	findingService *services.FindingService,
 	queueService *services.QueueService,
 	authService *services.AuthService,
+	serviceService *services.ServiceService,
+	relationService *services.RelationService,
 ) *gin.Engine {
 	// Create router with default logger and recovery middleware
 	router := gin.Default()
@@ -35,6 +37,8 @@ func SetupRouter(
 	targetHandler := handlers.NewTargetHandler(targetService)
 	scanHandler := handlers.NewScanHandler(scanService, queueService, projectService, targetService)
 	findingHandler := handlers.NewFindingHandler(findingService)
+	serviceHandler := handlers.NewServiceHandler(serviceService, targetService)
+	relationHandler := handlers.NewRelationHandler(relationService, targetService)
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
@@ -59,6 +63,7 @@ func SetupRouter(
 			projects.GET("/:id/targets", projectHandler.GetProjectTargets)
 			projects.GET("/:id/scans", projectHandler.GetProjectScans)
 			projects.GET("/:id/findings", projectHandler.GetProjectFindings)
+			projects.GET("/:id/services", projectHandler.GetProjectServices)
 		}
 
 		// Targets
@@ -71,6 +76,30 @@ func SetupRouter(
 			targets.PUT("/:id", targetHandler.UpdateTarget)
 			targets.DELETE("/:id", targetHandler.DeleteTarget)
 			targets.GET("/:id/findings", targetHandler.GetTargetFindings)
+			targets.GET("/:id/services", targetHandler.GetTargetServices)
+			targets.GET("/:id/relations", relationHandler.GetTargetRelations)
+		}
+
+		// Target Relations
+		relations := v1.Group("/relations")
+		{
+			relations.GET("", relationHandler.GetRelations)
+			relations.POST("", relationHandler.CreateRelation)
+			relations.POST("/bulk", relationHandler.BulkCreateRelations)
+			relations.GET("/:id", relationHandler.GetRelation)
+			relations.DELETE("/:id", relationHandler.DeleteRelation)
+		}
+
+		// Services
+		services := v1.Group("/services")
+		{
+			services.GET("", serviceHandler.GetServices)
+			services.POST("", serviceHandler.CreateService)
+			services.POST("/bulk", serviceHandler.BulkCreateServices)
+			services.GET("/:id", serviceHandler.GetService)
+			services.PUT("/:id", serviceHandler.UpdateService)
+			services.DELETE("/:id", serviceHandler.DeleteService)
+			services.GET("/:id/findings", serviceHandler.GetServiceFindings)
 		}
 
 		// Scans

@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"backend/internal/database"
 	"backend/internal/scanner"
 	"backend/internal/services"
 	"backend/internal/worker"
@@ -22,6 +23,7 @@ func main() {
 	// Parse command line flags
 	workerID := flag.String("id", "", "Worker ID (optional, random UUID will be generated if not provided)")
 	rabbitMQURL := flag.String("rabbitmq", "", "RabbitMQ URL (falls back to env var RABBITMQ_URL)")
+	dbURL := flag.String("db", "", "Database URL (falls back to env var DATABASE_URL)")
 	flag.Parse()
 
 	// Generate worker ID if not provided
@@ -32,6 +34,20 @@ func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
+	}
+
+	// Initialize Database connection
+	dbConnString := *dbURL
+	if dbConnString == "" {
+		dbConnString = os.Getenv("DATABASE_URL")
+		if dbConnString == "" {
+			dbConnString = "postgres://scanuser:scanpass@localhost:5432/scandb?sslmode=disable"
+		}
+	}
+
+	db, err := database.Connect(dbConnString)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	// Initialize RabbitMQ connection
@@ -45,22 +61,47 @@ func main() {
 
 	log.Printf("Starting worker %s, connecting to RabbitMQ at %s", *workerID, rabbitURL)
 
-	// Create queue service
+	// Create services
 	queueService, err := services.NewQueueService(rabbitURL)
 	if err != nil {
 		log.Fatalf("Failed to initialize queue service: %v", err)
 	}
 	defer queueService.Close()
 
+	targetService := services.NewTargetService(db)
+	serviceService := services.NewServiceService(db)
+
 	// Initialize scanner registry
 	scannerRegistry := scanner.NewRegistry()
 
 	// Register available scanners
-	pingScanner := scanner.NewPingScanner()
-	scannerRegistry.Register("ping", pingScanner)
+	//pingScanner := scanner.NewPingScanner()
+	//scannerRegistry.Register("ping", pingScanner)
+
+	nmapScanner := scanner.NewNmapScanner()
+	scannerRegistry.Register("nmap", nmapScanner)
+
+	dnsScanner := scanner.NewDNSScanner()
+	scannerRegistry.Register("dns", dnsScanner)
+
+	subdomainScanner := scanner.NewSubdomainScanner()
+	scannerRegistry.Register("subdomain", subdomainScanner)
+
+	nucleiScanner := scanner.NewNucleiScanner()
+	scannerRegistry.Register("nuclei", nucleiScanner)
+
+	httpxScanner := scanner.NewHTTPXScanner()
+	scannerRegistry.Register("httpx", httpxScanner)
 
 	// Create and start the worker
-	scanWorker := worker.NewWorker(queueService, scannerRegistry, *workerID)
+	scanWorker := worker.NewWorker(
+		queueService,
+		scannerRegistry,
+		targetService,
+		serviceService,
+		*workerID,
+	)
+
 	err = scanWorker.Start()
 	if err != nil {
 		log.Fatalf("Failed to start worker: %v", err)

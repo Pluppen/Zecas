@@ -14,27 +14,34 @@ import (
 
 const (
 	// Queue names
-	ScanQueueName     = "scan_queue"
-	CancelQueueName   = "cancel_queue"
-	FindingsQueueName = "findings_queue"
-	StatusQueueName   = "status_queue"
+	ScanQueueName      = "scan_queue"
+	CancelQueueName    = "cancel_queue"
+	FindingsQueueName  = "findings_queue"
+	StatusQueueName    = "status_queue"
+	TargetsQueueName   = "targets_queue"
+	RelationsQueueName = "relations_queue"
+	ServicesQueueName  = "services_queue"
 
 	// Exchange name
 	ExchangeName = "scanner_exchange"
 
 	// Routing keys
-	ScanRoutingKey     = "scan"
-	CancelRoutingKey   = "cancel"
-	FindingsRoutingKey = "findings"
-	StatusRoutingKey   = "status"
+	ScanRoutingKey      = "scan"
+	CancelRoutingKey    = "cancel"
+	FindingsRoutingKey  = "findings"
+	StatusRoutingKey    = "status"
+	TargetsRoutingKey   = "targets"
+	RelationsRoutingKey = "relations"
+	ServicesRoutingKey  = "services"
 )
 
 // ScanRequest represents a scan job to be queued
 type ScanRequest struct {
-	ScanID      uuid.UUID       `json:"scan_id"`
-	ScannerType string          `json:"scanner_type"`
-	Targets     []models.Target `json:"targets"`
-	Parameters  models.JSONB    `json:"parameters"`
+	ScanID      uuid.UUID        `json:"scan_id"`
+	ScannerType string           `json:"scanner_type"`
+	Targets     []models.Target  `json:"targets"`
+	Services    []models.Service `json:"services,omitempty"`
+	Parameters  models.JSONB     `json:"parameters"`
 }
 
 // StatusUpdate represents a scan status update
@@ -116,6 +123,9 @@ func (s *QueueService) setupExchangesAndQueues() error {
 		{CancelQueueName, CancelRoutingKey},
 		{FindingsQueueName, FindingsRoutingKey},
 		{StatusQueueName, StatusRoutingKey},
+		{TargetsQueueName, TargetsRoutingKey},
+		{RelationsQueueName, RelationsRoutingKey},
+		{ServicesQueueName, ServicesRoutingKey},
 	}
 
 	for _, q := range queues {
@@ -269,6 +279,90 @@ func (s *QueueService) PublishFinding(finding models.Finding) error {
 	}
 
 	log.Printf("Published finding for scan: %s, target: %s", finding.ScanID, finding.TargetID)
+	return nil
+}
+
+// PublishTarget publishes a new target to the targets queue
+func (s *QueueService) PublishTarget(target models.Target) error {
+	// Convert target to JSON
+	body, err := json.Marshal(target)
+	if err != nil {
+		return fmt.Errorf("failed to marshal target: %w", err)
+	}
+
+	// Publish to exchange
+	err = s.channel.Publish(
+		ExchangeName,      // exchange
+		TargetsRoutingKey, // routing key
+		false,             // mandatory
+		false,             // immediate
+		amqp.Publishing{
+			ContentType:  "application/json",
+			Body:         body,
+			DeliveryMode: amqp.Persistent, // Make message persistent
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to publish target: %w", err)
+	}
+
+	log.Printf("Published new target: %s (%s)", target.Value, target.TargetType)
+	return nil
+}
+
+// PublishTargetRelation publishes a target relation to the relations queue
+func (s *QueueService) PublishTargetRelation(relation models.TargetRelation) error {
+	// Convert relation to JSON
+	body, err := json.Marshal(relation)
+	if err != nil {
+		return fmt.Errorf("failed to marshal target relation: %w", err)
+	}
+
+	// Publish to exchange
+	err = s.channel.Publish(
+		ExchangeName,        // exchange
+		RelationsRoutingKey, // routing key
+		false,               // mandatory
+		false,               // immediate
+		amqp.Publishing{
+			ContentType:  "application/json",
+			Body:         body,
+			DeliveryMode: amqp.Persistent, // Make message persistent
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to publish target relation: %w", err)
+	}
+
+	log.Printf("Published target relation: %s -> %s (%s)", relation.SourceID, relation.DestinationID, relation.RelationType)
+	return nil
+}
+
+// PublishService publishes a new service to the services queue
+func (s *QueueService) PublishService(service models.Service) error {
+	// Convert service to JSON
+	body, err := json.Marshal(service)
+	if err != nil {
+		return fmt.Errorf("failed to marshal service: %w", err)
+	}
+
+	// Publish to exchange
+	err = s.channel.Publish(
+		ExchangeName,       // exchange
+		ServicesRoutingKey, // routing key
+		false,              // mandatory
+		false,              // immediate
+		amqp.Publishing{
+			ContentType:  "application/json",
+			Body:         body,
+			DeliveryMode: amqp.Persistent, // Make message persistent
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to publish service: %w", err)
+	}
+
+	log.Printf("Published service: %s:%d on target %s", service.ServiceName, service.Port, service.TargetID)
 	return nil
 }
 
@@ -460,3 +554,131 @@ func (s *QueueService) ConsumeFindings(handler func(models.Finding) error) error
 	return nil
 }
 
+// ConsumeTargets sets up a consumer for new targets
+func (s *QueueService) ConsumeTargets(handler func(models.Target) error) error {
+	// Consume messages from queue
+	msgs, err := s.channel.Consume(
+		TargetsQueueName, // queue
+		"",               // consumer (empty = auto-generated)
+		false,            // auto-ack (false = manual ack)
+		false,            // exclusive
+		false,            // no-local
+		false,            // no-wait
+		nil,              // args
+	)
+	if err != nil {
+		return fmt.Errorf("failed to register a consumer: %w", err)
+	}
+
+	// Process messages in a goroutine
+	go func() {
+		for d := range msgs {
+			// Parse message
+			var target models.Target
+			err := json.Unmarshal(d.Body, &target)
+			if err != nil {
+				log.Printf("Error unmarshaling target: %v", err)
+				d.Nack(false, true) // Requeue the message
+				continue
+			}
+
+			// Handle the target
+			err = handler(target)
+			if err != nil {
+				log.Printf("Error handling target: %v", err)
+				d.Nack(false, true) // Requeue the message
+			} else {
+				d.Ack(false) // Acknowledge the message (successfully processed)
+			}
+		}
+	}()
+
+	log.Println("Started consuming targets")
+	return nil
+}
+
+// ConsumeTargetRelations sets up a consumer for target relations
+func (s *QueueService) ConsumeTargetRelations(handler func(models.TargetRelation) error) error {
+	// Consume messages from queue
+	msgs, err := s.channel.Consume(
+		RelationsQueueName, // queue
+		"",                 // consumer (empty = auto-generated)
+		false,              // auto-ack (false = manual ack)
+		false,              // exclusive
+		false,              // no-local
+		false,              // no-wait
+		nil,                // args
+	)
+	if err != nil {
+		return fmt.Errorf("failed to register a consumer: %w", err)
+	}
+
+	// Process messages in a goroutine
+	go func() {
+		for d := range msgs {
+			// Parse message
+			var relation models.TargetRelation
+			err := json.Unmarshal(d.Body, &relation)
+			if err != nil {
+				log.Printf("Error unmarshaling target relation: %v", err)
+				d.Nack(false, true) // Requeue the message
+				continue
+			}
+
+			// Handle the relation
+			err = handler(relation)
+			if err != nil {
+				log.Printf("Error handling target relation: %v", err)
+				d.Nack(false, true) // Requeue the message
+			} else {
+				d.Ack(false) // Acknowledge the message (successfully processed)
+			}
+		}
+	}()
+
+	log.Println("Started consuming target relations")
+	return nil
+}
+
+// ConsumeServices sets up a consumer for services
+func (s *QueueService) ConsumeServices(handler func(models.Service) error) error {
+	// Consume messages from queue
+	msgs, err := s.channel.Consume(
+		ServicesQueueName, // queue
+		"",                // consumer (empty = auto-generated)
+		false,             // auto-ack (false = manual ack)
+		false,             // exclusive
+		false,             // no-local
+		false,             // no-wait
+		nil,               // args
+	)
+	if err != nil {
+		return fmt.Errorf("failed to register a consumer: %w", err)
+	}
+
+	// Process messages in a goroutine
+	go func() {
+		for d := range msgs {
+			// Parse message
+			var service models.Service
+			err := json.Unmarshal(d.Body, &service)
+			if err != nil {
+				log.Printf("Error unmarshaling service: %v", err)
+				d.Nack(false, true) // Requeue the message
+				continue
+			}
+
+			// Handle the service
+			err = handler(service)
+			if err != nil {
+				log.Printf("Error handling service: %v", err)
+				d.Nack(false, true) // Requeue the message
+			} else {
+				d.Ack(false) // Acknowledge the message (successfully processed)
+			}
+		}
+	}()
+
+	log.Println("Started consuming services")
+	return nil
+}
