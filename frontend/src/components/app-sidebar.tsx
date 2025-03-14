@@ -52,6 +52,10 @@ const data = {
           title: "Overview",
           url: "/project/scans/overview",
         },
+        {
+          title: "Configs",
+          url: "/project/scans/configs",
+        },
       ],
     },
     {
