@@ -65,6 +65,7 @@ const FormSchema = z.object({
 });
 
 function transformTargets(targets: string) {
+  console.log(targets);
   if (targets.split("\n").length < 1) {
     return []
   }
@@ -87,9 +88,9 @@ export default function InputForm() {
     let body = {
       name: data.name,
       description: data.description,
-      ip_ranges: transformTargets(data.ipAddresses),
-      cidr_ranges: transformTargets(data.cidrRanges),
-      domains: transformTargets(data.domains)
+      ip_ranges: data.ipAddresses ? transformTargets(data.ipAddresses) : [],
+      cidr_ranges: data.cidrRanges ? transformTargets(data.cidrRanges) : [],
+      domains: data.domains ? transformTargets(data.domains) : []
     }
 
     createNewProject(JSON.stringify(body), $user.access_token).then((result) => {

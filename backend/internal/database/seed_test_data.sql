@@ -8,6 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Clean up existing data
 DELETE FROM findings;
 DELETE FROM services;
+DELETE FROM applications;
 DELETE FROM target_relations;
 DELETE FROM targets;
 DELETE FROM scan_tasks;
@@ -53,6 +54,12 @@ DECLARE
     example_ssh_service_id UUID := '50000000-0000-0000-0000-000000000003';
     github_http_service_id UUID := '50000000-0000-0000-0000-000000000004';
     github_https_service_id UUID := '50000000-0000-0000-0000-000000000005';
+
+    -- Applications
+    wp_blog_app_id UUID := '60000000-0000-0000-0000-000000000001';
+    api_app_id UUID := '60000000-0000-0000-0000-000000000002';
+    github_app_id UUID := '60000000-0000-0000-0000-000000000003';
+    jira_app_id UUID := '60000000-0000-0000-0000-000000000004';
     
     -- Current timestamp
     current_timestamp TIMESTAMP WITH TIME ZONE := NOW();
@@ -891,6 +898,236 @@ BEGIN
         NOW()
     );
 
+        INSERT INTO applications (
+        id, 
+        project_id, 
+        scan_id, 
+        name, 
+        type, 
+        version, 
+        description, 
+        url, 
+        host_target, 
+        service_id, 
+        metadata, 
+        created_at, 
+        updated_at
+    )
+    VALUES 
+        (
+            wp_blog_app_id,
+            test_project_id,
+            nmap_scan_id,
+            'WordPress Blog',
+            'cms',
+            '5.9.3',
+            'WordPress blog instance running on example.com/blog',
+            'https://blog.example.com',
+            blog_subdomain_id,
+            example_https_service_id,
+            jsonb_build_object(
+                'detected_paths', ARRAY['/wp-admin/', '/wp-content/', '/wp-includes/'],
+                'login_paths', ARRAY['/wp-login.php'],
+                'detected_plugins', ARRAY['contact-form-7', 'yoast-seo'],
+                'detected_at', current_timestamp
+            ),
+            current_timestamp,
+            current_timestamp
+        ),
+        (
+            api_app_id,
+            test_project_id,
+            nmap_scan_id,
+            'REST API',
+            'frameworks',
+            '1.0',
+            'Custom API service built on Laravel',
+            'https://api.example.com',
+            api_subdomain_id,
+            example_https_service_id,
+            jsonb_build_object(
+                'framework', 'Laravel',
+                'version', '8.6.0',
+                'detected_paths', ARRAY['/api/v1/', '/docs/'],
+                'technologies', ARRAY['PHP', 'MySQL', 'Nginx'],
+                'detected_at', current_timestamp
+            ),
+            current_timestamp,
+            current_timestamp
+        ),
+        (
+            github_app_id,
+            test_project_id,
+            nmap_scan_id,
+            'GitHub',
+            'version_control',
+            'Enterprise 3.4',
+            'GitHub Enterprise instance',
+            'https://github.com',
+            github_domain_id,
+            github_https_service_id,
+            jsonb_build_object(
+                'detected_paths', ARRAY['/login', '/explore', '/settings/profile'],
+                'login_paths', ARRAY['/login'],
+                'detected_at', current_timestamp
+            ),
+            current_timestamp,
+            current_timestamp
+        ),
+        (
+            jira_app_id,
+            test_project_id,
+            nmap_scan_id,
+            'Jira Issue Tracker',
+            'issue_trackers',
+            '8.20.5',
+            'Jira issue tracking system',
+            'https://example.com/jira',
+            example_domain_id,
+            example_https_service_id,
+            jsonb_build_object(
+                'detected_paths', ARRAY['/secure/Dashboard.jspa', '/browse/'],
+                'login_paths', ARRAY['/login.jsp'],
+                'public_projects_accessible', true,
+                'detected_at', current_timestamp
+            ),
+            current_timestamp,
+            current_timestamp
+        );
+
+    -- Create application findings
+    INSERT INTO findings (
+        id, 
+        scan_id, 
+        target_id, 
+        service_id, 
+        application_id, 
+        title, 
+        description, 
+        severity, 
+        finding_type, 
+        details, 
+        discovered_at, 
+        verified, 
+        fixed, 
+        manual
+    )
+    VALUES
+        (
+            uuid_generate_v4(),
+            nmap_scan_id,
+            blog_subdomain_id,
+            example_https_service_id,
+            wp_blog_app_id,
+            'WordPress Version Disclosure',
+            'The WordPress version (5.9.3) is disclosed in the page meta tags. This information can help attackers identify vulnerabilities specific to this version.',
+            'low',
+            'information_disclosure',
+            jsonb_build_object(
+                'application_name', 'WordPress Blog',
+                'application_type', 'cms',
+                'application_version', '5.9.3',
+                'disclosure_location', 'meta generator tag',
+                'detected_at', current_timestamp
+            ),
+            current_timestamp - INTERVAL '30 minutes',
+            true,
+            false,
+            false
+        ),
+        (
+            uuid_generate_v4(),
+            nmap_scan_id,
+            blog_subdomain_id,
+            example_https_service_id,
+            wp_blog_app_id,
+            'WordPress Outdated Plugins',
+            'Several WordPress plugins appear to be outdated, which may contain security vulnerabilities.',
+            'medium',
+            'outdated_software',
+            jsonb_build_object(
+                'application_name', 'WordPress Blog',
+                'application_type', 'cms',
+                'plugins', jsonb_build_array(
+                    jsonb_build_object('name', 'contact-form-7', 'installed_version', '5.4.2', 'latest_version', '5.5.6'),
+                    jsonb_build_object('name', 'yoast-seo', 'installed_version', '17.8', 'latest_version', '19.2')
+                ),
+                'detected_at', current_timestamp
+            ),
+            current_timestamp - INTERVAL '29 minutes',
+            true,
+            false,
+            false
+        ),
+        (
+            uuid_generate_v4(),
+            nmap_scan_id,
+            api_subdomain_id,
+            example_https_service_id,
+            api_app_id,
+            'Laravel Debug Mode Enabled',
+            'The Laravel application has debug mode enabled in a production environment. This can expose sensitive application information, including environment variables, file paths, and database queries.',
+            'high',
+            'configuration_error',
+            jsonb_build_object(
+                'application_name', 'REST API',
+                'application_type', 'frameworks',
+                'framework', 'Laravel',
+                'issue', 'Debug mode enabled',
+                'detected_at', current_timestamp
+            ),
+            current_timestamp - INTERVAL '28 minutes',
+            true,
+            false,
+            false
+        ),
+        (
+            uuid_generate_v4(),
+            nmap_scan_id,
+            github_domain_id,
+            github_https_service_id,
+            github_app_id,
+            'Web Application Detected: GitHub',
+            'Detected GitHub Enterprise application at https://github.com\nVersion: Enterprise 3.4\nApplication Type: version_control\n\nDetected paths:\n- /login\n- /explore\n- /settings/profile\n\nLogin pages:\n- /login\n\nRecommendations:\n- Ensure the application is up-to-date\n- Review access controls and authentication settings\n- Implement proper backup procedures for repositories',
+            'info',
+            'application_detection',
+            jsonb_build_object(
+                'application_name', 'GitHub',
+                'application_type', 'version_control',
+                'application_version', 'Enterprise 3.4',
+                'application_url', 'https://github.com',
+                'detected_at', current_timestamp
+            ),
+            current_timestamp - INTERVAL '27 minutes',
+            true,
+            false,
+            false
+        ),
+        (
+            uuid_generate_v4(),
+            nmap_scan_id,
+            example_domain_id,
+            example_https_service_id,
+            jira_app_id,
+            'Jira Public Projects Accessible',
+            'The Jira instance has projects that are publicly accessible without authentication. This could expose sensitive information depending on the content of the projects.',
+            'medium',
+            'security_misconfiguration',
+            jsonb_build_object(
+                'application_name', 'Jira Issue Tracker',
+                'application_type', 'issue_trackers',
+                'issue', 'Public projects accessible',
+                'url', 'https://example.com/jira/secure/BrowseProjects.jspa',
+                'detected_at', current_timestamp
+            ),
+            current_timestamp - INTERVAL '26 minutes',
+            true,
+            false,
+            false
+        );
+
+    RAISE NOTICE 'Application test data creation completed';
+    RAISE NOTICE 'Created 4 test applications with findings';
     RAISE NOTICE 'Test data creation completed';
     RAISE NOTICE 'Project ID: %', test_project_id;
     RAISE NOTICE 'Example domain target ID: %', example_domain_id;

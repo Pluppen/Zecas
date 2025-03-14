@@ -1,10 +1,13 @@
 // internal/worker/worker.go
 package worker
 
+// TODO: Implement func for handling Applications
+
 import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"backend/internal/models"
@@ -16,12 +19,13 @@ import (
 
 // Worker manages scan jobs
 type Worker struct {
-	queueService    *services.QueueService
-	scannerRegistry *scanner.Registry
-	targetService   *services.TargetService
-	serviceService  *services.ServiceService
-	activeScans     map[uuid.UUID]context.CancelFunc
-	workerID        string
+	queueService       *services.QueueService
+	scannerRegistry    *scanner.Registry
+	targetService      *services.TargetService
+	applicationService *services.ApplicationService
+	serviceService     *services.ServiceService
+	activeScans        map[uuid.UUID]context.CancelFunc
+	workerID           string
 }
 
 // NewWorker creates a new worker
@@ -30,15 +34,17 @@ func NewWorker(
 	scannerRegistry *scanner.Registry,
 	targetService *services.TargetService,
 	serviceService *services.ServiceService,
+	applicationService *services.ApplicationService,
 	workerID string,
 ) *Worker {
 	return &Worker{
-		queueService:    queueService,
-		scannerRegistry: scannerRegistry,
-		targetService:   targetService,
-		serviceService:  serviceService,
-		activeScans:     make(map[uuid.UUID]context.CancelFunc),
-		workerID:        workerID,
+		queueService:       queueService,
+		scannerRegistry:    scannerRegistry,
+		applicationService: applicationService,
+		targetService:      targetService,
+		serviceService:     serviceService,
+		activeScans:        make(map[uuid.UUID]context.CancelFunc),
+		workerID:           workerID,
 	}
 }
 
@@ -151,7 +157,7 @@ func (w *Worker) handleScanRequest(request services.ScanRequest) error {
 			}
 
 			// Run the scan with timeout
-			scanCtx, scanCancel := context.WithTimeout(ctx, 5*time.Minute)
+			scanCtx, scanCancel := context.WithTimeout(ctx, 30*time.Minute)
 			results, err := s.Scan(scanCtx, scanTarget, request.Parameters)
 			scanCancel()
 
@@ -203,7 +209,7 @@ func (w *Worker) handleScanRequest(request services.ScanRequest) error {
 		}
 
 		// Run the scan with timeout
-		scanCtx, scanCancel := context.WithTimeout(ctx, 5*time.Minute)
+		scanCtx, scanCancel := context.WithTimeout(ctx, 30*time.Minute)
 		results, err := s.Scan(scanCtx, scanTarget, request.Parameters)
 		scanCancel()
 
@@ -249,6 +255,131 @@ func (w *Worker) processScanResults(results *models.ScanResults, scanID uuid.UUI
 	}
 	projectID := target.ProjectID
 
+	// Process new targets
+	targetIDMap := make(map[uuid.UUID]uuid.UUID)
+	for i := range results.NewTargets {
+		// Set project ID for new targets
+		results.NewTargets[i].ProjectID = projectID
+
+		originalID := results.NewTargets[i].ID
+
+		existingTarget, err := w.targetService.FindByTypeAndValue(
+			projectID,
+			results.NewTargets[i].TargetType,
+			results.NewTargets[i].Value,
+		)
+
+		if err == nil {
+			targetIDMap[originalID] = existingTarget.ID
+			log.Printf("Target already exists: %s (%s) with ID %s",
+				results.NewTargets[i].Value, results.NewTargets[i].TargetType, existingTarget.ID)
+		} else {
+			// Queue new target
+			err := w.queueService.PublishTarget(results.NewTargets[i])
+			if err != nil {
+				log.Printf("Error publishing new target: %v", err)
+			}
+
+			targetIDMap[originalID] = results.NewTargets[i].ID
+			log.Printf("Created new target: %s (%s) with ID %s",
+				results.NewTargets[i].Value, results.NewTargets[i].TargetType, results.NewTargets[i].ID)
+		}
+	}
+
+	// Process services
+	for i := range results.Services {
+		// If target ID is not set, use the current target ID
+		if results.Services[i].TargetID == uuid.Nil {
+			results.Services[i].TargetID = targetID
+		} else if mappedID, exists := targetIDMap[results.Services[i].TargetID]; exists {
+			results.Services[i].TargetID = mappedID
+		}
+
+		existingService, err := w.serviceService.FindByTargetAndPort(
+			results.Services[i].TargetID,
+			results.Services[i].Port,
+			results.Services[i].Protocol,
+		)
+
+		if err == nil {
+			results.Services[i].ID = existingService.ID
+			w.updateServiceReferences(results, existingService.ID)
+		} else {
+			// Queue service
+			err := w.queueService.PublishService(results.Services[i])
+			if err != nil {
+				log.Printf("Error publishing service: %v", err)
+			}
+		}
+	}
+
+	// Process target relations
+	for i := range results.TargetRelations {
+		// If source ID is not set, use the current target ID
+		if results.TargetRelations[i].SourceID == uuid.Nil {
+			results.TargetRelations[i].SourceID = targetID
+		} else if mappedID, exists := targetIDMap[results.TargetRelations[i].SourceID]; exists {
+			results.TargetRelations[i].SourceID = mappedID
+		}
+
+		if mappedID, exists := targetIDMap[results.TargetRelations[i].DestinationID]; exists {
+			results.TargetRelations[i].DestinationID = mappedID
+		}
+
+		_, srcErr := w.targetService.GetByID(results.TargetRelations[i].SourceID)
+		_, dstErr := w.targetService.GetByID(results.TargetRelations[i].DestinationID)
+
+		if srcErr != nil || dstErr != nil {
+			log.Printf("Skipping relation: source or destination target doesn't exist: %v, %v",
+				srcErr, dstErr)
+			continue
+		}
+
+		// Queue target relation
+		err := w.queueService.PublishTargetRelation(results.TargetRelations[i])
+		if err != nil {
+			log.Printf("Error publishing target relation: %v", err)
+		}
+	}
+
+	for i := range results.Applications {
+		// Set project ID for new applications
+		results.Applications[i].ProjectID = projectID
+
+		// Set scan ID
+		results.Applications[i].ScanID = &scanID
+
+		// If host target is not set, use the current target ID
+		if results.Applications[i].HostTarget == nil {
+			results.Applications[i].HostTarget = &targetID
+		}
+
+		// Create the application
+		// TODO: Change below to publish new application on queue instead.
+		err := w.applicationService.Create(&results.Applications[i])
+		if err != nil {
+			log.Printf("Error creating application: %v", err)
+			continue
+		}
+
+		// Update related findings with the application ID
+		for j := range results.Findings {
+			// Look for findings that are related to this application by URL or identifiers in details
+			if shouldAssociateWithApp(&results.Findings[j], &results.Applications[i]) {
+				appID := results.Applications[i].ID
+				results.Findings[j].ApplicationID = &appID
+
+				// Re-publish the finding with the application ID
+				err := w.queueService.PublishFinding(results.Findings[j])
+				if err != nil {
+					log.Printf("Error republishing finding with application ID: %v", err)
+				}
+			}
+		}
+
+		log.Printf("Created application: %s (ID: %s)", results.Applications[i].Name, results.Applications[i].ID)
+	}
+
 	// Process findings
 	for i := range results.Findings {
 		// Set scan and target IDs for findings
@@ -264,46 +395,6 @@ func (w *Worker) processScanResults(results *models.ScanResults, scanID uuid.UUI
 		err := w.queueService.PublishFinding(results.Findings[i])
 		if err != nil {
 			log.Printf("Error publishing finding: %v", err)
-		}
-	}
-
-	// Process new targets
-	for i := range results.NewTargets {
-		// Set project ID for new targets
-		results.NewTargets[i].ProjectID = projectID
-
-		// Queue new target
-		err := w.queueService.PublishTarget(results.NewTargets[i])
-		if err != nil {
-			log.Printf("Error publishing new target: %v", err)
-		}
-	}
-
-	// Process target relations
-	for i := range results.TargetRelations {
-		// If source ID is not set, use the current target ID
-		if results.TargetRelations[i].SourceID == uuid.Nil {
-			results.TargetRelations[i].SourceID = targetID
-		}
-
-		// Queue target relation
-		err := w.queueService.PublishTargetRelation(results.TargetRelations[i])
-		if err != nil {
-			log.Printf("Error publishing target relation: %v", err)
-		}
-	}
-
-	// Process services
-	for i := range results.Services {
-		// If target ID is not set, use the current target ID
-		if results.Services[i].TargetID == uuid.Nil {
-			results.Services[i].TargetID = targetID
-		}
-
-		// Queue service
-		err := w.queueService.PublishService(results.Services[i])
-		if err != nil {
-			log.Printf("Error publishing service: %v", err)
 		}
 	}
 }
@@ -329,7 +420,7 @@ func (w *Worker) handleNewTarget(target models.Target) error {
 	log.Printf("[Worker %s] Received new target: %s (%s)", w.workerID, target.Value, target.TargetType)
 
 	// Create the target
-	err := w.targetService.Create(&target)
+	_, err := w.targetService.UpsertTarget(&target)
 	if err != nil {
 		return fmt.Errorf("failed to create target: %w", err)
 	}
@@ -357,10 +448,81 @@ func (w *Worker) handleNewService(service models.Service) error {
 		w.workerID, service.ServiceName, service.Port, service.TargetID)
 
 	// Create the service
-	err := w.serviceService.Create(&service)
+	_, err := w.serviceService.UpsertService(&service)
 	if err != nil {
-		return fmt.Errorf("failed to create service: %w", err)
+		return fmt.Errorf("failed to upsert service: %w", err)
 	}
 
 	return nil
+}
+
+// Add helper methods for updating references
+func (w *Worker) updateRelationships(results *models.ScanResults, targetID uuid.UUID) {
+	// Update target relationships
+	for i := range results.TargetRelations {
+		if results.TargetRelations[i].DestinationID == targetID {
+			// Fix the relation
+			// Do nothing - the ID is already correct
+		}
+	}
+
+	// Update service target references
+	for i := range results.Services {
+		if results.Services[i].TargetID == targetID {
+			// Do nothing - the ID is already correct
+		}
+	}
+}
+
+func (w *Worker) updateServiceReferences(results *models.ScanResults, serviceID uuid.UUID) {
+	// Update findings that reference this service
+	for i := range results.Findings {
+		if results.Findings[i].ServiceID != nil && *results.Findings[i].ServiceID == serviceID {
+			// Do nothing - the ID is already correct
+		}
+	}
+}
+
+// shouldAssociateWithApp determines if a finding should be associated with an application
+func shouldAssociateWithApp(finding *models.Finding, app *models.Application) bool {
+	// If the finding already has a specific application ID set, don't override it
+	if finding.ApplicationID != nil {
+		return false
+	}
+
+	// Check if finding details contain URL that matches application URL
+	if appURL := app.URL; appURL != "" {
+		if findingURL, ok := finding.Details["url"].(string); ok && findingURL != "" {
+			if strings.Contains(findingURL, appURL) || strings.Contains(appURL, findingURL) {
+				return true
+			}
+		}
+	}
+
+	// Check if finding type is related to application technology
+	if strings.Contains(finding.FindingType, strings.ToLower(app.Type)) {
+		return true
+	}
+
+	// Check if finding title contains application name
+	if strings.Contains(strings.ToLower(finding.Title), strings.ToLower(app.Name)) {
+		return true
+	}
+
+	// Check for application-specific findings
+	appSpecificTypes := map[string]bool{
+		"web_vulnerability":    true,
+		"application_security": true,
+		"cms_vulnerability":    true,
+		"framework_issue":      true,
+	}
+
+	if appSpecificTypes[finding.FindingType] {
+		// For application-specific finding types, associate with the app if they share the same host target
+		if finding.TargetID == *app.HostTarget {
+			return true
+		}
+	}
+
+	return false
 }

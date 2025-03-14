@@ -305,6 +305,34 @@ func (h *ProjectHandler) GetProjectFindings(c *gin.Context) {
 	c.JSON(http.StatusOK, findings)
 }
 
+// GetProjectApplications gets all findings for a project
+// @Summary Get project applications
+// @Description Get all applications for a specific project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID"
+// @Success 200 {array} models.Finding
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/projects/{id}/applications [get]
+func (h *ProjectHandler) GetProjectApplications(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID format"})
+		return
+	}
+
+	applications, err := h.projectService.GetApplications(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve applications"})
+		return
+	}
+
+	c.JSON(http.StatusOK, applications)
+}
+
 // GetProjectServices gets all services for a project
 // @Summary Get project services
 // @Description Get all services for a specific project

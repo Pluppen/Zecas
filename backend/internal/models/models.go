@@ -89,10 +89,10 @@ type Target struct {
 	TargetType  string           `json:"target_type" gorm:"type:varchar(20);not null;check:target_type IN ('ip', 'cidr', 'domain', 'subdomain')"`
 	Value       string           `json:"value" gorm:"type:text;not null"`
 	Metadata    JSONB            `json:"metadata" gorm:"type:jsonb;default:'{}'::jsonb"`
-	Findings    []Finding        `json:"findings,omitempty" gorm:"foreignKey:TargetID"`
-	Services    []Service        `json:"services,omitempty" gorm:"foreignKey:TargetID"`
-	RelatedFrom []TargetRelation `json:"related_from,omitempty" gorm:"foreignKey:SourceID"`
-	RelatedTo   []TargetRelation `json:"related_to,omitempty" gorm:"foreignKey:DestinationID"`
+	Findings    []Finding        `json:"findings,omitempty" gorm:"foreignKey:TargetID;constraint:OnDelete:CASCADE;"`
+	Services    []Service        `json:"services,omitempty" gorm:"foreignKey:TargetID;constraint:OnDelete:CASCADE;"`
+	RelatedFrom []TargetRelation `json:"related_from,omitempty" gorm:"foreignKey:SourceID;constraint:OnDelete:CASCADE;"`
+	RelatedTo   []TargetRelation `json:"related_to,omitempty" gorm:"foreignKey:DestinationID;constraint:OnDelete:CASCADE;"`
 	CreatedAt   time.Time        `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt   time.Time        `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
 }
@@ -107,8 +107,8 @@ type TargetRelation struct {
 	CreatedAt     time.Time `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt     time.Time `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
 
-	Source      Target `json:"-" gorm:"foreignKey:SourceID"`
-	Destination Target `json:"-" gorm:"foreignKey:DestinationID"`
+	Source      Target `json:"-" gorm:"foreignKey:SourceID;constraint:OnDelete:CASCADE"`
+	Destination Target `json:"-" gorm:"foreignKey:DestinationID;constraint:OnDelete:CASCADE"`
 }
 
 // Service represents a service running on a target
@@ -128,6 +128,24 @@ type Service struct {
 	UpdatedAt   time.Time `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
 
 	Target Target `json:"-" gorm:"foreignKey:TargetID"`
+}
+
+// Application represents an high level application running o a target
+type Application struct {
+	ID          uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	ProjectID   uuid.UUID  `json:"project_id" gorm:"type:uuid;not null"`
+	ScanID      *uuid.UUID `json:"scan_id,omitempty" gorm:"type:uuid;"`
+	Name        string     `json:"name" gorm:"type:varchar(255);not null"`
+	Type        string     `json:"type" gorm:"type:varchar(100);not null"` // gitlab, wordpress, jira, etc.
+	Version     string     `json:"version" gorm:"type:varchar(100)"`
+	Description string     `json:"description" gorm:"type:text"`
+	URL         string     `json:"url" gorm:"type:text"`
+	HostTarget  *uuid.UUID `json:"host_target,omitempty" gorm:"type:uuid"` // Optional link to host target
+	ServiceID   *uuid.UUID `json:"service_id,omitempty" gorm:"type:uuid"`  // Optional link to hosting service
+	Metadata    JSONB      `json:"metadata" gorm:"type:jsonb;default:'{}'::jsonb"`
+	Findings    []Finding  `json:"findings,omitempty" gorm:"foreignKey:ApplicationID;constraint:OnDelete:CASCADE;"`
+	CreatedAt   time.Time  `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt   time.Time  `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
 }
 
 // ScanConfig represents a reusable scan configuration
@@ -158,22 +176,20 @@ type Scan struct {
 
 // Finding represents a vulnerability or other issue found during scanning
 type Finding struct {
-	ID           uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	ScanID       *uuid.UUID `json:"scan_id,omitempty" gorm:"type:uuid;"`
-	TargetID     uuid.UUID  `json:"target_id" gorm:"type:uuid;not null"`
-	ServiceID    *uuid.UUID `json:"service_id,omitempty" gorm:"type:uuid;"`
-	Title        string     `json:"title" gorm:"type:varchar(255);not null"`
-	Description  string     `json:"description" gorm:"type:text"`
-	Severity     string     `json:"severity" gorm:"type:varchar(20);not null;check:severity IN ('critical', 'high', 'medium', 'low', 'info', 'unknown')"`
-	FindingType  string     `json:"finding_type" gorm:"type:varchar(50);not null"`
-	Details      JSONB      `json:"details" gorm:"type:jsonb;default:'{}'::jsonb"`
-	DiscoveredAt time.Time  `json:"discovered_at" gorm:"default:CURRENT_TIMESTAMP"`
-	Verified     bool       `json:"verified" gorm:"default:false"`
-	Fixed        bool       `json:"fixed" gorm:"default:false"`
-	Manual       bool       `json:"manual" gorm:"default:false"`
-
-	Target  Target   `json:"-" gorm:"foreignKey:TargetID"`
-	Service *Service `json:"-" gorm:"foreignKey:ServiceID"`
+	ID            uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	ScanID        *uuid.UUID `json:"scan_id,omitempty" gorm:"type:uuid;"`
+	TargetID      uuid.UUID  `json:"target_id" gorm:"type:uuid;not null"`
+	ServiceID     *uuid.UUID `json:"service_id,omitempty" gorm:"type:uuid;"`
+	ApplicationID *uuid.UUID `json:"application_id,omitempty" gorm:"type:uuid;"`
+	Title         string     `json:"title" gorm:"type:varchar(255);not null"`
+	Description   string     `json:"description" gorm:"type:text"`
+	Severity      string     `json:"severity" gorm:"type:varchar(20);not null;check:severity IN ('critical', 'high', 'medium', 'low', 'info', 'unknown')"`
+	FindingType   string     `json:"finding_type" gorm:"type:varchar(50);not null"`
+	Details       JSONB      `json:"details" gorm:"type:jsonb;default:'{}'::jsonb"`
+	DiscoveredAt  time.Time  `json:"discovered_at" gorm:"default:CURRENT_TIMESTAMP"`
+	Verified      bool       `json:"verified" gorm:"default:false"`
+	Fixed         bool       `json:"fixed" gorm:"default:false"`
+	Manual        bool       `json:"manual" gorm:"default:false"`
 }
 
 // Report represents a generated report for a project
@@ -222,6 +238,7 @@ type ScanResults struct {
 	NewTargets      []Target         `json:"new_targets,omitempty"`
 	TargetRelations []TargetRelation `json:"target_relations,omitempty"`
 	Services        []Service        `json:"services,omitempty"`
+	Applications    []Application    `json:"applications,omitempty"`
 }
 
 // Auth Related

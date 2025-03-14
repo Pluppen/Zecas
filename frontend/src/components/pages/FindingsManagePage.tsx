@@ -47,7 +47,7 @@ export default function FindingsManagePage() {
             <h1>Findings</h1>
             <CreateFindingDialog setFindings={setFindings} />
             <div className="py-10">
-                <DataTable columns={getColumns(setFindings, findings)} data={findings.map(f => ({...f, target_value: targetsMap[f.target_id]?.value ?? ""}))} />
+                <DataTable columns={getColumns(setFindings, findings)} data={findings.map(f => ({...f, target_value: targetsMap[f.target_id]?.value ?? ""}))} filterSettings={{placeholder: "Filter by title...", filterKey: "title"}} />
             </div>
         </div>
     );

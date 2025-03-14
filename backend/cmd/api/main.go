@@ -55,10 +55,12 @@ func main() {
 	authService := services.NewAuthService(db)
 	serviceService := services.NewServiceService(db)
 	relationService := services.NewRelationService(db)
+	aplicationService := services.NewApplicationService(db)
 
 	// Setup findings consumer
 	err = queueService.ConsumeFindings(func(finding models.Finding) error {
-		return findingService.Create(&finding)
+		_, e := findingService.UpsertFinding(&finding)
+		return e
 	})
 	if err != nil {
 		log.Fatalf("Failed to set up findings consumer: %v", err)
@@ -96,7 +98,7 @@ func main() {
 	}
 
 	// Setup router
-	router := api.SetupRouter(projectService, targetService, scanService, findingService, queueService, authService, serviceService, relationService)
+	router := api.SetupRouter(projectService, targetService, scanService, findingService, queueService, authService, serviceService, relationService, aplicationService)
 
 	// Start server
 	port := os.Getenv("PORT")

@@ -42,88 +42,88 @@ export const getColumns = (setTargets: any, targets: any) => {
           enableHiding: false,
         },
     {
-      accessorKey: "value",
+      accessorKey: "name",
       header: ({ column }) => {
           return (
             <Button
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             >
-              Target
+              Name
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          )
+        },
+      cell: ({row, column}) => (
+        <span className="pl-3 block">{row.getValue(column.id)}</span>
+      ),
+    },
+    {
+      accessorKey: "description",
+      header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              Description
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          )
+        },
+      cell: ({row, column}) => (
+        <span className="pl-3 block">{row.getValue(column.id)}</span>
+      ),
+    },
+    {
+      accessorKey: "type",
+      header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              Application Type
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          )
+        },
+      cell: ({row, column}) => (
+        <span className="pl-3 block">{row.getValue(column.id)}</span>
+      ),
+    },
+    {
+      accessorKey: "version",
+      header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Version
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          )
+        },
+      cell: ({row, column}) => (
+        <span className="pl-3 block">{row.getValue(column.id)}</span>
+      ),
+    },
+    {
+      accessorKey: "target",
+      header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Target
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
           )
         },
       cell: ({row, column}) => (
         <span className="pl-3">{row.getValue(column.id)}</span>
-      ),
-    },
-    {
-      accessorKey: "target_type",
-      header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-                Type
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-          )
-        },
-      cell: ({row, column}) => (
-        <span className="pl-3 uppercase">{row.getValue(column.id)}</span>
-      ),
-    },
-    {
-      accessorKey: "findings",
-      header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-                Findings
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-          )
-        },
-      cell: ({row, column}) => (
-        <span className="pl-3 uppercase">{row.getValue(column.id)?.length ?? 0}</span>
-      ),
-    },
-    {
-      accessorKey: "services",
-      header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-                Services
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-          )
-        },
-      cell: ({row, column}) => (
-        <span className="pl-3 uppercase">{row.getValue(column.id)?.length ?? 0}</span>
-      ),
-    },
-    {
-      accessorKey: "updated_at",
-      header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-              Updated
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-          )
-        },
-      cell: ({row, column}) => (
-        <span className="pl-3">{new Date(row.getValue(column.id)).toLocaleString()}</span>
       ),
     },
     {
@@ -134,19 +134,19 @@ export const getColumns = (setTargets: any, targets: any) => {
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             >
-                Created
+                Discovered
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
           )
         },
       cell: ({row, column}) => (
-        <span className="pl-3">{new Date(row.getValue(column.id)).toLocaleString()}</span>
+        <span className="block pl-3">{new Date(row.getValue(column.id)).toLocaleString()}</span>
       ),
     },
     {
       id: "actions",
       cell: ({ row }) => {
-        const target = row.original
+        const service = row.original
   
         return (
           <DropdownMenu>
@@ -161,28 +161,28 @@ export const getColumns = (setTargets: any, targets: any) => {
               <DropdownMenuItem
                 className="hover:cursor-pointer"
                 onClick={() => {
-                  navigator.clipboard.writeText(target.id)
-                  toast("Copied finding ID to clipboard")
+                  navigator.clipboard.writeText(service.id)
+                  toast("Copied service ID to clipboard")
                 }}
               >
-                Copy target ID
+                Copy service ID
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <a target="_blank" href={`/targets/${target.id}`}>View details</a>
+                <a target="_blank" href={`/services/${service.id}`}>View details</a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <div className="hover:cursor-pointer text-red-500">
                 <RemoveItemDialog
                 handleSubmit={async () => {
                   const $user = user.get();
-                  const result = await deleteTargetById(target.id, $user.access_token);
-                  if ("error" in result) {
-                    toast("Failed to remove target");
-                    return;
-                  }
-                  const tmpTargets = targets.slice().filter(t => t.id !== target.id);
-                  setTargets(tmpTargets);
-                  toast("Successfully removed target");
+                  //const result = await deleteTargetById(service.id, $user.access_token);
+                  //if ("error" in result) {
+                  //  toast("Failed to remove service");
+                  //  return;
+                  //}
+                  //const tmpTargets = targets.slice().filter(t => t.id !== service.id);
+                  //setTargets(tmpTargets);
+                  //toast("Successfully removed service");
                 }}
                   button={
                     <>

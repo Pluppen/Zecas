@@ -96,3 +96,72 @@ func (s *ServiceService) GetByProjectID(projectID uuid.UUID) ([]models.Service, 
 		Find(&services)
 	return services, result.Error
 }
+
+// UpsertService creates a service if it doesn't exist or returns existing one
+func (s *ServiceService) UpsertService(service *models.Service) (*models.Service, error) {
+	// Try to find an existing service with the same target_id, port, and protocol
+	var existingService models.Service
+	result := s.db.Where(
+		"target_id = ? AND port = ? AND protocol = ?",
+		service.TargetID, service.Port, service.Protocol,
+	).First(&existingService)
+
+	if result.Error == nil {
+		// Service already exists, update non-critical fields
+		updates := map[string]interface{}{}
+
+		// Only update if the new value is non-empty
+		if service.ServiceName != "" && service.ServiceName != existingService.ServiceName {
+			updates["service_name"] = service.ServiceName
+		}
+
+		if service.Version != "" && service.Version != existingService.Version {
+			updates["version"] = service.Version
+		}
+
+		if service.Banner != "" && service.Banner != existingService.Banner {
+			updates["banner"] = service.Banner
+		}
+
+		// Merge the raw_info, keeping existing data but adding new
+		if service.RawInfo != nil {
+			mergedInfo := existingService.RawInfo
+			if mergedInfo == nil {
+				mergedInfo = models.JSONB{}
+			}
+
+			for k, v := range service.RawInfo {
+				if _, exists := mergedInfo[k]; !exists {
+					mergedInfo[k] = v
+				}
+			}
+
+			updates["raw_info"] = mergedInfo
+		}
+
+		// Apply updates if there are any
+		if len(updates) > 0 {
+			s.db.Model(&existingService).Updates(updates)
+		}
+
+		return &existingService, nil
+	}
+
+	// Service doesn't exist, create it
+	err := s.db.Create(service).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return service, nil
+}
+
+// FindByTargetAndPort finds a service by target ID, port, and protocol
+func (s *ServiceService) FindByTargetAndPort(targetID uuid.UUID, port int, protocol string) (*models.Service, error) {
+	var service models.Service
+	result := s.db.Where(
+		"target_id = ? AND port = ? AND protocol = ?",
+		targetID, port, protocol,
+	).First(&service)
+	return &service, result.Error
+}

@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   SquareTerminal,
   Target,
+  Warehouse,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -42,18 +43,6 @@ const data = {
   },
   navMain: [
     {
-      title: "Dashboard",
-      url: "/project/dashboard",
-      icon: LayoutDashboard,
-      isActive: true,
-      items: [
-        {
-          title: "Overview",
-          url: "/project/scans/overview",
-        },
-      ],
-    },
-    {
       title: "Scans",
       url: "/project/scans/overview",
       icon: Radar,
@@ -66,18 +55,22 @@ const data = {
       ],
     },
     {
-      title: "Targets",
+      title: "Assets",
       url: "/project/targets/overview",
       icon: Target,
       isActive: true,
       items: [
         {
-          title: "Overview",
+          title: "Targets",
           url: "/project/targets/overview",
         },
         {
           title: "Services",
           url: "/project/targets/services",
+        },
+        {
+          title: "Applications",
+          url: "/project/targets/applications",
         },
       ],
     },
@@ -109,6 +102,38 @@ const data = {
         },
         {
           title: "Generated Reports",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Inventory",
+      url: "#",
+      icon: Warehouse,
+      isActive: false,
+      items: [
+        {
+          title: "Overview",
+          url: "#",
+        },
+        {
+          title: "Ports",
+          url: "#",
+        },
+        {
+          title: "Certificates",
+          url: "#",
+        },
+        {
+          title: "Services",
+          url: "#",
+        },
+        {
+          title: "Applications",
+          url: "#",
+        },
+        {
+          title: "Assets",
           url: "#",
         },
       ],

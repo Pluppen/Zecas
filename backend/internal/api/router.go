@@ -19,6 +19,7 @@ func SetupRouter(
 	authService *services.AuthService,
 	serviceService *services.ServiceService,
 	relationService *services.RelationService,
+	applicationService *services.ApplicationService,
 ) *gin.Engine {
 	// Create router with default logger and recovery middleware
 	router := gin.Default()
@@ -39,6 +40,7 @@ func SetupRouter(
 	findingHandler := handlers.NewFindingHandler(findingService)
 	serviceHandler := handlers.NewServiceHandler(serviceService, targetService)
 	relationHandler := handlers.NewRelationHandler(relationService, targetService)
+	applicationHandler := handlers.NewApplicationHandler(applicationService, projectService, targetService, serviceService)
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
@@ -64,6 +66,7 @@ func SetupRouter(
 			projects.GET("/:id/scans", projectHandler.GetProjectScans)
 			projects.GET("/:id/findings", projectHandler.GetProjectFindings)
 			projects.GET("/:id/services", projectHandler.GetProjectServices)
+			projects.GET("/:id/applications", projectHandler.GetProjectApplications)
 		}
 
 		// Targets
@@ -88,6 +91,18 @@ func SetupRouter(
 			relations.POST("/bulk", relationHandler.BulkCreateRelations)
 			relations.GET("/:id", relationHandler.GetRelation)
 			relations.DELETE("/:id", relationHandler.DeleteRelation)
+		}
+
+		// Applications
+		applications := v1.Group("/applications")
+		{
+			applications.GET("", applicationHandler.GetApplications)
+			applications.POST("", applicationHandler.CreateApplication)
+			applications.POST("/bulk", applicationHandler.BulkCreateApplications)
+			applications.GET("/:id", applicationHandler.GetApplication)
+			applications.PUT("/:id", applicationHandler.UpdateApplication)
+			applications.DELETE("/:id", applicationHandler.DeleteApplication)
+			applications.GET("/:id/findings", applicationHandler.GetApplicationFindings)
 		}
 
 		// Services

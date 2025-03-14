@@ -54,6 +54,7 @@ func (s *ProjectService) GetScans(projectID uuid.UUID) ([]models.Scan, error) {
 
 // GetFindings returns all findings for a project
 func (s *ProjectService) GetFindings(projectID uuid.UUID) ([]models.Finding, error) {
+	// TODO Add params to exreact the fileds linked by foreignKey
 	var findings []models.Finding
 	result := s.db.Joins("JOIN targets ON findings.target_id = targets.id").
 		Where("targets.project_id = ?", projectID).
@@ -64,8 +65,17 @@ func (s *ProjectService) GetFindings(projectID uuid.UUID) ([]models.Finding, err
 // GetServicess returns all findings for a project
 func (s *ProjectService) GetServices(projectID uuid.UUID) ([]models.Service, error) {
 	var services []models.Service
+	// TODO Add params to exreact the fileds linked by foreignKey
 	result := s.db.Joins("JOIN targets ON services.target_id = targets.id").
 		Where("targets.project_id = ?", projectID).
 		Find(&services)
 	return services, result.Error
+}
+
+// GetServicess returns all findings for a project
+func (s *ProjectService) GetApplications(projectID uuid.UUID) ([]models.Application, error) {
+	var applications []models.Application
+	// TODO Add params to exreact the fileds linked by foreignKey
+	result := s.db.Where("project_id = ?", projectID).Find(&applications)
+	return applications, result.Error
 }

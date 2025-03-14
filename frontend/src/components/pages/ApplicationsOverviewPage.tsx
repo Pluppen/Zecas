@@ -4,28 +4,26 @@ import {user} from "@/lib/userStore";
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import { getProjectServices, getProjectTargets } from "@/lib/api/projects";
-import {getTargetFindings, getTargetServices} from "@/lib/api/targets"
+import { getProjectApplications, getProjectTargets } from "@/lib/api/projects";
 
-import CreateFindingDialog from "@/components/findings/create-finding-dialog";
-
-import { getColumns } from "@/components/services/data-table/columns";
+import { getColumns } from "@/components/applications/data-table/columns";
 import { DataTable } from "@/components/findings/data-table/data-table";
 
 
-export default function ServicesOverviewPage() {
+export default function ApplicationsOverviewPage() {
     const $activeProjectId = useStore(activeProjectIdStore);
-    const [services, setServices] = useState([]);
+    const [applications, setApplications] = useState([]);
     const [targetsMap, setTargetsMap] = useState({});
     const $user = useStore(user);
 
     useEffect(() => {
         if($activeProjectId) {
-            getProjectServices($activeProjectId, $user.access_token).then(services => {
-                if ("error" in services) {
+            getProjectApplications($activeProjectId, $user.access_token).then(applications => {
+                if ("error" in applications) {
                     return
                 }
-                setServices(services);
+                console.log(applications[0]);
+                setApplications(applications);
             })
 
             getProjectTargets($activeProjectId, $user.access_token).then(result => {
@@ -47,8 +45,8 @@ export default function ServicesOverviewPage() {
         <div className="mt-4 container mx-auto ">
             <div className="py-10">
                 <DataTable
-                    columns={getColumns(setServices, services)}
-                    data={services.map(s => ({...s, target: targetsMap[s.target_id]?.value ?? ""}))}
+                    columns={getColumns(setApplications, applications)}
+                    data={applications.map(s => ({...s, target: targetsMap[s.host_target]?.value ?? ""}))}
                     filterSettings={{placeholder: "Filter by description...", filterKey: "description"}}
                 />
             </div>

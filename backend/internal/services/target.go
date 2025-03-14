@@ -33,7 +33,7 @@ func (s *TargetService) GetByID(id uuid.UUID) (*models.Target, error) {
 // GetByProjectID returns all targets for a specific project
 func (s *TargetService) GetByProjectID(projectID uuid.UUID) ([]models.Target, error) {
 	var targets []models.Target
-	result := s.db.Where("project_id = ?", projectID).Find(&targets)
+	result := s.db.Preload("Findings").Preload("Services").Where("project_id = ?", projectID).Find(&targets)
 	return targets, result.Error
 }
 
@@ -179,4 +179,49 @@ func (s *TargetService) GetServices(targetID uuid.UUID) ([]models.Service, error
 	var services []models.Service
 	result := s.db.Where("target_id = ?", targetID).Find(&services)
 	return services, result.Error
+}
+
+// UpsertTarget creates a target if it doesn't exist or returns existing one
+func (s *TargetService) UpsertTarget(target *models.Target) (*models.Target, error) {
+	// Try to find an existing target with the same project_id, target_type, and value
+	var existingTarget models.Target
+	result := s.db.Where(
+		"project_id = ? AND target_type = ? AND value = ?",
+		target.ProjectID, target.TargetType, target.Value,
+	).First(&existingTarget)
+
+	if result.Error == nil {
+		// Target already exists, update metadata if necessary
+		if target.Metadata != nil {
+			// Merge metadata, preferring existing values but adding new ones
+			for k, v := range target.Metadata {
+				if _, exists := existingTarget.Metadata[k]; !exists {
+					if existingTarget.Metadata == nil {
+						existingTarget.Metadata = models.JSONB{}
+					}
+					existingTarget.Metadata[k] = v
+				}
+			}
+			s.db.Model(&existingTarget).Update("metadata", existingTarget.Metadata)
+		}
+		return &existingTarget, nil
+	}
+
+	// Target doesn't exist, create it
+	err := s.db.Create(target).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return target, nil
+}
+
+// FindByTypeAndValue finds a target by type and value in a specific project
+func (s *TargetService) FindByTypeAndValue(projectID uuid.UUID, targetType, value string) (*models.Target, error) {
+	var target models.Target
+	result := s.db.Where(
+		"project_id = ? AND target_type = ? AND value = ?",
+		projectID, targetType, value,
+	).First(&target)
+	return &target, result.Error
 }

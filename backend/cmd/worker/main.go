@@ -70,6 +70,7 @@ func main() {
 
 	targetService := services.NewTargetService(db)
 	serviceService := services.NewServiceService(db)
+	applicationService := services.NewApplicationService(db)
 
 	// Initialize scanner registry
 	scannerRegistry := scanner.NewRegistry()
@@ -99,6 +100,7 @@ func main() {
 		scannerRegistry,
 		targetService,
 		serviceService,
+		applicationService,
 		*workerID,
 	)
 

@@ -1,11 +1,16 @@
 // internal/scanner/nmap.go
 package scanner
 
+// TODO: Write down a spec on what we want out of this scanner, what types of assets shoudl it create
+// and also if this scanner should be able to generate findings and
+// what is counted as a finding from this tool.
+
 import (
 	"backend/internal/models"
 	"context"
 	"encoding/xml"
 	"fmt"
+	"log"
 	"net"
 	"os/exec"
 	"strings"
@@ -182,12 +187,13 @@ func (s *NmapScanner) Scan(ctx context.Context, target interface{}, params model
 	output, err := cmd.CombinedOutput()
 	outputStr := string(output)
 
-	if err != nil && !strings.Contains(outputStr, "<nmaprun") {
+	if err != nil || !strings.Contains(outputStr, "<nmaprun") {
 		return nil, fmt.Errorf("nmap scan failed: %w", err)
 	}
 
 	// Parse XML output
 	var result NmapXML
+	log.Printf("%s", output)
 	if err := xml.Unmarshal(output, &result); err != nil {
 		return nil, fmt.Errorf("failed to parse nmap output: %w", err)
 	}
@@ -307,26 +313,27 @@ func (s *NmapScanner) Scan(ctx context.Context, target interface{}, params model
 				scanResults.Services = append(scanResults.Services, service)
 
 				// Create a finding for each service
-				finding := models.Finding{
-					Title:       fmt.Sprintf("Open port %d/%s: %s on %s", port.PortID, port.Protocol, port.Service.Name, ipAddress),
-					Description: s.generatePortDescription(port, ipAddress),
-					Severity:    s.determineSeverityForPort(port),
-					TargetID:    targetForFindings,
-					FindingType: "open_port",
-					Details: models.JSONB{
-						"target":        ipAddress,
-						"port":          port.PortID,
-						"protocol":      port.Protocol,
-						"service":       port.Service.Name,
-						"product":       port.Service.Product,
-						"version":       port.Service.Version,
-						"state":         port.State.State,
-						"reason":        port.State.Reason,
-						"service_id":    service.ID.String(),
-						"discovered_at": time.Now().Format(time.RFC3339),
-					},
-				}
-				scanResults.Findings = append(scanResults.Findings, finding)
+				// TODO: Change this to actually be a finding.
+				// finding := models.Finding{
+				// 	Title:       fmt.Sprintf("Open port %d/%s: %s on %s", port.PortID, port.Protocol, port.Service.Name, ipAddress),
+				// 	Description: s.generatePortDescription(port, ipAddress),
+				// 	Severity:    s.determineSeverityForPort(port),
+				// 	TargetID:    targetForFindings,
+				// 	FindingType: "open_port",
+				// 	Details: models.JSONB{
+				// 		"target":        ipAddress,
+				// 		"port":          port.PortID,
+				// 		"protocol":      port.Protocol,
+				// 		"service":       port.Service.Name,
+				// 		"product":       port.Service.Product,
+				// 		"version":       port.Service.Version,
+				// 		"state":         port.State.State,
+				// 		"reason":        port.State.Reason,
+				// 		"service_id":    service.ID.String(),
+				// 		"discovered_at": time.Now().Format(time.RFC3339),
+				// 	},
+				// }
+				// scanResults.Findings = append(scanResults.Findings, finding)
 			}
 		}
 

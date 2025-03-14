@@ -1,6 +1,10 @@
 // internal/scanner/subdomain.go
 package scanner
 
+// TODO: Write down a spec on what we want out of this scanner, what types of assets shoudl it create
+// and also if this scanner should be able to generate findings and
+// what is counted as a finding from this tool.
+
 import (
 	"backend/internal/models"
 	"bufio"

@@ -16,6 +16,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO: Write down a spec on what we want out of this scanner, what types of assets shoudl it create
+// and also if this scanner should be able to generate findings and
+// what is counted as a finding from this tool.
+
+// NOTES:
+// Identified web apps or generally all apps running on this target or service
+// generally because of different applicaton libarys being used and fraemworks,,,
+
 // HTTPXScanner implements the Scanner interface for performing HTTPX scans
 type HTTPXScanner struct {
 	binPath string

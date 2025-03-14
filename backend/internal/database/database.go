@@ -33,6 +33,7 @@ func Migrate(db *gorm.DB) error {
 		&models.Target{},
 		&models.ScanConfig{},
 		&models.Scan{},
+		&models.Application{},
 		&models.Finding{},
 		&models.Report{},
 		&models.ScanTask{},

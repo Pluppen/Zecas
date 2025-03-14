@@ -143,3 +143,38 @@ func (s *FindingService) MarkFixed(id uuid.UUID, fixed bool) error {
 func (s *FindingService) MarkVerified(id uuid.UUID, verified bool) error {
 	return s.db.Model(&models.Finding{}).Where("id = ?", id).Update("verified", verified).Error
 }
+
+// UpsertFinding creates a finding if it doesn't exist or returns existing one
+func (s *FindingService) UpsertFinding(finding *models.Finding) (*models.Finding, error) {
+	// Try to find an existing finding with the same project_id, finding_type, and value
+	var existingFinding models.Finding
+	result := s.db.Where(
+		"(target_id = ? OR service_id = ? OR application_id = ?) AND finding_type = ? AND severity = ?",
+		finding.TargetID, finding.ServiceID, finding.ApplicationID, finding.FindingType, finding.Severity,
+	).First(&existingFinding)
+
+	if result.Error == nil {
+		// Finding already exists, update metadata if necessary
+		if finding.Details != nil {
+			// Merge metadata, preferring existing values but adding new ones
+			for k, v := range finding.Details {
+				if _, exists := existingFinding.Details[k]; !exists {
+					if existingFinding.Details == nil {
+						existingFinding.Details = models.JSONB{}
+					}
+					existingFinding.Details[k] = v
+				}
+			}
+			s.db.Model(&existingFinding).Update("metadata", existingFinding.Details)
+		}
+		return &existingFinding, nil
+	}
+
+	// Finding doesn't exist, create it
+	err := s.db.Create(finding).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return finding, nil
+}
