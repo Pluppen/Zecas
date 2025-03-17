@@ -13,7 +13,6 @@ import { extractSessionCookie } from "@/lib/utils";
 import {getScanConfigs} from "@/lib/api/scans";
 
 const sessionToken = extractSessionCookie(Astro);
-
 const scanConfigs = await getScanConfigs(sessionToken);
 ---
 
@@ -21,7 +20,7 @@ const scanConfigs = await getScanConfigs(sessionToken);
     <div class="w-2/3">
         <h1 class="mb-4">Scan Configs</h1>
         <CreateScanConfigDialog client:load />
-        <div class="grid grid-cols-4 gap-4 mt-8"> 
+        <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"> 
             {scanConfigs.map(scanConfig => (
                 <Card key={scanConfig.id}>
                     <CardHeader>

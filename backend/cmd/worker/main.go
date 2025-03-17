@@ -75,10 +75,6 @@ func main() {
 	// Initialize scanner registry
 	scannerRegistry := scanner.NewRegistry()
 
-	// Register available scanners
-	//pingScanner := scanner.NewPingScanner()
-	//scannerRegistry.Register("ping", pingScanner)
-
 	nmapScanner := scanner.NewNmapScanner()
 	scannerRegistry.Register("nmap", nmapScanner)
 

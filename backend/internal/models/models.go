@@ -152,7 +152,7 @@ type Application struct {
 type ScanConfig struct {
 	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	Name        string    `json:"name" gorm:"type:varchar(255);not null"`
-	ScannerType string    `json:"scanner_type" gorm:"type:varchar(50);not null"`
+	ScannerType string    `json:"scanner_type" gorm:"type:varchar(50);not null;check:scanner_type IN ('nmap', 'dns', 'subdomain', 'nuclei', 'httpx')"`
 	Parameters  JSONB     `json:"parameters" gorm:"type:jsonb;default:'{}'::jsonb"`
 	Active      bool      `json:"active" gorm:"default:true"`
 	Scans       []Scan    `json:"scans,omitempty" gorm:"foreignKey:ScanConfigID"`
