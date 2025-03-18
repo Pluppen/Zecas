@@ -3,6 +3,10 @@ import { z } from "zod";
 
 export type ScannerType = "nmap" | "dns" | "subdomain" | "nuclei" | "httpx";
 
+export const ScannerTypeEnum = z.enum([
+    "nmap", "dns", "subdomain", "nuclei", "httpx"
+])
+
 const NmapParametersSchema = z.object({
     scan_type: z.enum([
         "quick",
@@ -10,54 +14,62 @@ const NmapParametersSchema = z.object({
         "service",
         "all_ports",
         "basic",
-    ]),
-    port_range: z.string(),
-    timing: z.enum(["0", "1", "2", "3", "4", "5"]),
+    ], {
+        message: "Parameter scan_type can only be quick, comprehensive, service, all_ports or basic"
+    }),
+    port_range: z.string({
+        message: "Parameter port_range is required to be a valid string"
+    }),
+    timing: z.enum(["0", "1", "2", "3", "4", "5"], {
+        message: "Parameter timing can only be a number between 0-5"
+    }),
 });
 
 const allowedRecordTypes = ["A", "AAAA", "CNAME", "MX", "TXT", "NS"] as const;
 const DNSParametersSchema = z.object({
-    record_types: z.array(z.enum(allowedRecordTypes)),
+    record_types: z.array(z.enum(allowedRecordTypes, {
+        message: "Parameter record_types needs to be an array of valid DNS records"
+    })),
 });
 
 
 const SubdomainParametersSchema = z.object({
-    recursive: z.boolean(),
-    resolve_ip: z.boolean(),
-    wordlist: z.string(),
-    timeout: z.number(),
+    recursive: z.boolean({message: "Parameter recursive needs to be either true or false"}),
+    resolve_ip: z.boolean({message: "Parameter resolve_ip needs to be either true or false"}),
+    wordlist: z.string({message: "Parameter wordlist needs to be a valid string"}),
+    timeout: z.number({message: "Parameter timeout needs to be a valid number"})
 });
 
 const NucleiParametersSchema = z.object({
-    template_tags: z.array(z.string()),
-    template_paths: z.array(z.string()),
-    template_exclude: z.array(z.string()),
-    severity: z.string(),
-    timeout: z.number(),
-    rate_limit: z.number(),
-    bulk_size: z.number(),
-    templates_dir: z.string(),
-    headless: z.boolean(),
-    include_all: z.boolean(),
+    template_tags: z.array(z.string({message: "Parameter template_tags needs to be a list of strings"})),
+    template_paths: z.array(z.string({message: "Parameter template_paths needs to be a list of strings"})),
+    template_exclude: z.array(z.string({message: "Parameter template_exclude needs to be a list of strings"})),
+    severity: z.string({message: "Parameter severity needs to be a valid string"}),
+    timeout: z.number({message: "Parameter timeout needs to be a valid number"}),
+    rate_limit: z.number({message: "Parameter rate_limit needs to be a valid number"}),
+    bulk_size: z.number({message: "Parameter bulk_size needs to be a valid number"}),
+    templates_dir: z.string({message: "Parameter templates_dir needs to be a valid string"}),
+    headless: z.boolean({message: "Parameter headless needs to be either true or false"}),
+    include_all: z.boolean({message: "Parameter include_all needs to be either true or false"}),
 });
 
 const HttpxParametersSchema = z.object({
-    timeout: z.number(),
-    threads: z.number(),
-    follow_redirects: z.boolean(),
-    tech_detect: z.boolean(),
-    status_code: z.boolean(),
-    title: z.boolean(),
-    web_server: z.boolean(),
-    content_type: z.boolean(),
-    tls: z.boolean(),
-    favicon: z.boolean(),
-    jarm: z.boolean(),
-    probe: z.boolean(),
-    ports: z.string(),
-    http2: z.boolean(),
-    security_headers: z.boolean(),
-    extract_cname: z.boolean(),
+    timeout: z.number({message: "Timeout needs to be a valid number"}),
+    threads: z.number({message: "Timeout needs to be a valid number"}),
+    follow_redirects: z.boolean({message: "Parameter include_all needs to be either true or false"}),
+    tech_detect: z.boolean({message: "Parameter tech_detect needs to be either true or false"}),
+    status_code: z.boolean({message: "Parameter status_code needs to be either true or false"}),
+    title: z.boolean({message: "Parameter title needs to be either true or false"}),
+    web_server: z.boolean({message: "Parameter web_server needs to be either true or false"}),
+    content_type: z.boolean({message: "Parameter content_type needs to be either true or false"}),
+    tls: z.boolean({message: "Parameter tls needs to be either true or false"}),
+    favicon: z.boolean({message: "Parameter favicon needs to be either true or false"}),
+    jarm: z.boolean({message: "Parameter jarm needs to be either true or false"}),
+    probe: z.boolean({message: "Parameter probe needs to be either true or false"}),
+    ports: z.string({message: "Parameter ports needs to be a valid string"}),
+    http2: z.boolean({message: "Parameter http2 needs to be either true or false"}),
+    security_headers: z.boolean({message: "Parameter security_headers needs to be either true or false"}),
+    extract_cname: z.boolean({message: "Parameter extract_cname needs to be either true or false"}),
 });
 
 const ScanConfigBaseSchema = z.object({
@@ -88,6 +100,7 @@ export const ScanConfigSchema = z.discriminatedUnion("scanner_type", [
         parameters: HttpxParametersSchema,
     }),
 ]);
+export type ScanConfig = z.infer<typeof ScanConfigSchema>
 
 export const getScanConfigs = async (access_token: string) => {
     return await callAPI("/api/v1/scan-configs", {

@@ -2,38 +2,15 @@
 import "@/styles/global.css";
 import Layout from '@/layouts/Layout.astro';
 
-import CreateScanDialog from '@/components/create-scan-dialog';
-import CreateScanConfigDialog from '@/components/create-scan-config-dialog';
-
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-
 import { extractSessionCookie } from "@/lib/utils";
 import {getScanConfigs} from "@/lib/api/scans";
+
+import ScanConfigsOverviewPage from "@/components/pages/ScanConfigsOverviewPage"
 
 const sessionToken = extractSessionCookie(Astro);
 const scanConfigs = await getScanConfigs(sessionToken);
 ---
 
 <Layout breadcrumbL1="Scans" breadcrumbL2="Configs" breadcrumbL1Href="/project/scans/overview">
-    <div class="w-2/3">
-        <h1 class="mb-4">Scan Configs</h1>
-        <CreateScanConfigDialog client:load />
-        <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"> 
-            {scanConfigs.map(scanConfig => (
-                <Card key={scanConfig.id}>
-                    <CardHeader>
-                        <CardTitle>{scanConfig.name}</CardTitle>
-                        <CardDescription>
-                            <Badge className="mt-2 uppercase" variant="outline">{scanConfig.scanner_type}</Badge>
-                        </CardDescription>
-                    </CardHeader>
-                    <CardFooter>
-                        <Button variant="secondary">Edit</Button>
-                    </CardFooter>
-                </Card>
-            ))}
-        </div>
-    </div>
+    <ScanConfigsOverviewPage client:load scanConfigs={scanConfigs} />
 </Layout>

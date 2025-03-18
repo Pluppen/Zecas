@@ -23,13 +23,11 @@ DECLARE
     test_project_id UUID := '10000000-0000-0000-0000-000000000001';
     
     -- Scan Configs
-    ping_config_id UUID := '20000000-0000-0000-0000-000000000001';
     nmap_config_id UUID := '20000000-0000-0000-0000-000000000002';
     dns_config_id UUID := '20000000-0000-0000-0000-000000000003';
     subdomain_config_id UUID := '20000000-0000-0000-0000-000000000004';
     
     -- Scans
-    ping_scan_id UUID := '30000000-0000-0000-0000-000000000001';
     nmap_scan_id UUID := '30000000-0000-0000-0000-000000000002';
     dns_scan_id UUID := '30000000-0000-0000-0000-000000000003';
     
@@ -77,14 +75,6 @@ BEGIN
     -- Create scan configurations
     INSERT INTO scan_configs (id, name, scanner_type, parameters, active, created_at)
     VALUES 
-        (
-            ping_config_id,
-            'Basic Ping Test',
-            'ping',
-            '{"count": 3, "timeout": 2}'::jsonb,
-            true,
-            current_timestamp
-        ),
         (
             nmap_config_id,
             'Basic Port Scan',
@@ -388,16 +378,6 @@ BEGIN
     INSERT INTO scans (id, project_id, scan_config_id, status, started_at, completed_at, raw_results, created_at)
     VALUES 
         (
-            ping_scan_id,
-            test_project_id,
-            ping_config_id,
-            'completed',
-            current_timestamp - INTERVAL '2 hour',
-            current_timestamp - INTERVAL '1 hour 55 minutes',
-            '{"result": "ping scan completed successfully"}'::jsonb,
-            current_timestamp - INTERVAL '2 hours'
-        ),
-        (
             nmap_scan_id,
             test_project_id,
             nmap_config_id,
@@ -419,55 +399,6 @@ BEGIN
         );
 
     -- Create findings
-    -- Ping findings
-    INSERT INTO findings (id, scan_id, target_id, service_id, title, description, severity, finding_type, details, discovered_at, verified, fixed, manual)
-    VALUES
-        (
-            uuid_generate_v4(),
-            ping_scan_id,
-            example_ip_id,
-            NULL,
-            'Host example.com is reachable',
-            'Host example.com (93.184.216.34) is reachable via ICMP ping with 0% packet loss.',
-            'info',
-            'ping',
-            '{"target": "93.184.216.34", "reachable": true, "min_rtt": 20.5, "avg_rtt": 22.3, "max_rtt": 25.1, "packet_loss": 0}'::jsonb,
-            current_timestamp - INTERVAL '1 hour 59 minutes',
-            true,
-            false,
-            false
-        ),
-        (
-            uuid_generate_v4(),
-            ping_scan_id,
-            github_ip1_id,
-            NULL,
-            'Host github.com is reachable',
-            'Host github.com (140.82.121.3) is reachable via ICMP ping with 0% packet loss.',
-            'info',
-            'ping',
-            '{"target": "140.82.121.3", "reachable": true, "min_rtt": 15.2, "avg_rtt": 17.8, "max_rtt": 19.5, "packet_loss": 0}'::jsonb,
-            current_timestamp - INTERVAL '1 hour 58 minutes',
-            true,
-            false,
-            false
-        ),
-        (
-            uuid_generate_v4(),
-            ping_scan_id,
-            google_dns_id,
-            NULL,
-            'Host 8.8.8.8 is reachable',
-            'Host 8.8.8.8 (Google DNS) is reachable via ICMP ping with 0% packet loss.',
-            'info',
-            'ping',
-            '{"target": "8.8.8.8", "reachable": true, "min_rtt": 8.1, "avg_rtt": 10.2, "max_rtt": 12.5, "packet_loss": 0}'::jsonb,
-            current_timestamp - INTERVAL '1 hour 57 minutes',
-            true,
-            false,
-            false
-        );
-
     -- Nmap findings
     INSERT INTO findings (id, scan_id, target_id, service_id, title, description, severity, finding_type, details, discovered_at, verified, fixed, manual)
     VALUES
@@ -649,36 +580,6 @@ BEGIN
     -- Create scan tasks
     INSERT INTO scan_tasks (id, scan_id, task_type, parameters, status, result, created_at, updated_at)
     VALUES
-        (
-            uuid_generate_v4(),
-            ping_scan_id,
-            'ping',
-            '{"target": "example.com", "count": 3, "timeout": 2}'::jsonb,
-            'completed',
-            '{"min_rtt": 20.5, "avg_rtt": 22.3, "max_rtt": 25.1, "packet_loss": 0, "reachable": true}'::jsonb,
-            current_timestamp - INTERVAL '2 hours',
-            current_timestamp - INTERVAL '1 hour 55 minutes'
-        ),
-        (
-            uuid_generate_v4(),
-            ping_scan_id,
-            'ping',
-            '{"target": "github.com", "count": 3, "timeout": 2}'::jsonb,
-            'completed',
-            '{"min_rtt": 15.2, "avg_rtt": 17.8, "max_rtt": 19.5, "packet_loss": 0, "reachable": true}'::jsonb,
-            current_timestamp - INTERVAL '2 hours',
-            current_timestamp - INTERVAL '1 hour 55 minutes'
-        ),
-        (
-            uuid_generate_v4(),
-            ping_scan_id,
-            'ping',
-            '{"target": "8.8.8.8", "count": 3, "timeout": 2}'::jsonb,
-            'completed',
-            '{"min_rtt": 8.1, "avg_rtt": 10.2, "max_rtt": 12.5, "packet_loss": 0, "reachable": true}'::jsonb,
-            current_timestamp - INTERVAL '2 hours',
-            current_timestamp - INTERVAL '1 hour 55 minutes'
-        ),
         (
             uuid_generate_v4(),
             nmap_scan_id,

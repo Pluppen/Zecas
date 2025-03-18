@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useForm } from "react-hook-form"
+import { useForm, type ErrorOption } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import {type ScannerType, ScanConfigSchema, createScanConfig} from "@/lib/api/scans";
+import {type ScannerType, ScanConfigSchema, ScannerTypeEnum, createScanConfig} from "@/lib/api/scans";
 
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -51,25 +51,56 @@ const SCANNER_TYPES: ScannerType[] = [
     "httpx"
 ]
 
-export default function CreateFindingDialog ({setScanConfigs}: {setScanConfigs: SetStateAction}) {
+const scanConfigFormSchema = z.object({
+  name: z.string(),
+  scanner_type: ScannerTypeEnum,
+  parameters: z.string()
+})
+
+export default function CreateScanConfigDialog ({setScanConfigs}: {setScanConfigs: SetStateAction}) {
   const $user = useStore(user);
   const [open, setOpen] = useState(false);
 
-  const form = useForm<z.infer<typeof ScanConfigSchema>>({
-    resolver: zodResolver(ScanConfigSchema),
+  const form = useForm<z.infer<typeof scanConfigFormSchema>>({
+    resolver: zodResolver(scanConfigFormSchema),
     defaultValues: {
       name: "",
     },
   })
 
-  const onSubmit = (data: z.infer<typeof ScanConfigSchema>) => {
+  const onSubmit = (data: z.infer<typeof scanConfigFormSchema>) => {
     if ($user.access_token) {
-        createScanConfig({
-            name: data.name,
-            active: true,
-            scanner_type: data.scanner_type,
-            parameters: data.parameters
-        }, $user.access_token).then((result) => {
+        let parameters;
+        try {
+          // TODO: Make sure this parsing gets done safely
+          parameters = JSON.parse(data.parameters);
+        } catch (e) {
+          const errorOpt: ErrorOption = {
+            "message": "Invalid JSON"
+          }
+          form.setError("parameters", errorOpt)
+          return
+        }
+
+        const scanConfig = {
+          ...data,
+          active: true,
+          parameters
+        }
+        const dataResult = ScanConfigSchema.safeParse(scanConfig);
+
+        if (!dataResult.success)  {
+          const errorOpt: ErrorOption = {
+            "message": ""
+          }
+          dataResult.error.errors.forEach(e => {
+            errorOpt["message"] += ` ${e.message}`
+          });
+          form.setError("parameters", errorOpt)
+          return
+        }
+
+        createScanConfig(scanConfig, $user.access_token).then((result) => {
             if ("error" in result) {
                 toast(result.error);
                 return
@@ -94,7 +125,10 @@ export default function CreateFindingDialog ({setScanConfigs}: {setScanConfigs: 
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit, (data) => {
+              console.log("Invalido Data");
+              console.log(data);
+            })} className="space-y-4">
                 <FormField
                     control={form.control}
                     name="name"
@@ -121,7 +155,7 @@ export default function CreateFindingDialog ({setScanConfigs}: {setScanConfigs: 
                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                     <SelectTrigger className="w-[180px] capitalize">
-                                        <SelectValue placeholder="Target Type" />
+                                        <SelectValue placeholder="Scanner Type" />
                                     </SelectTrigger>
                                 </FormControl>
                                 <FormMessage />
@@ -140,12 +174,27 @@ export default function CreateFindingDialog ({setScanConfigs}: {setScanConfigs: 
                         </FormItem>
                     )}
                 />
+                <FormField
+                    control={form.control}
+                    name="parameters"
+                    render={({field}) => (
+                        <FormItem>
+                            <Label htmlFor="scanner_type">
+                              Parameters
+                            </Label>
+                            <FormControl>
+                              <Textarea {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <div>
                     {/* TODO JSON editor for parameters */}
                 </div>
                 <DialogFooter>
                     <Button type="submit">
-                        Add Finding 
+                        Create Scan Config
                     </Button>
                 </DialogFooter>
             </form>
