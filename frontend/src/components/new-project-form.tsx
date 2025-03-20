@@ -85,19 +85,21 @@ export default function InputForm() {
   })
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    let body = {
-      name: data.name,
-      description: data.description,
-      ip_ranges: data.ipAddresses ? transformTargets(data.ipAddresses) : [],
-      cidr_ranges: data.cidrRanges ? transformTargets(data.cidrRanges) : [],
-      domains: data.domains ? transformTargets(data.domains) : []
-    }
+    if ($user.access_token) {
+      let body = {
+        name: data.name,
+        description: data.description,
+        ip_ranges: data.ipAddresses ? transformTargets(data.ipAddresses) : [],
+        cidr_ranges: data.cidrRanges ? transformTargets(data.cidrRanges) : [],
+        domains: data.domains ? transformTargets(data.domains) : []
+      }
 
-    createNewProject(JSON.stringify(body), $user.access_token).then((result) => {
-      console.log(result);
-      activeProjectIdStore.set(result.id)
-      window.location.href="/"
-    });
+      createNewProject(JSON.stringify(body), $user.access_token).then((result) => {
+        console.log(result);
+        activeProjectIdStore.set(result.id)
+        window.location.href="/"
+      });
+    }
   }
 
   return (

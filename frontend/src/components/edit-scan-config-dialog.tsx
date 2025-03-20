@@ -6,13 +6,11 @@ import { useForm, type ErrorOption } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Select,
@@ -22,20 +20,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import MultiSelect from "@/components/multi-select"
 import { Textarea } from "@/components/ui/textarea";
 
-import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import {type ScanConfig, type ScannerType, ScanConfigSchema, ScannerTypeEnum, createScanConfig} from "@/lib/api/scans";
+import {type ScanConfig, type ScannerType, ScanConfigSchema, ScannerTypeEnum, updateScanConfigById} from "@/lib/api/scans";
 
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -57,14 +52,23 @@ const scanConfigFormSchema = z.object({
   parameters: z.string()
 })
 
-export default function CreateScanConfigDialog ({setScanConfigs}: {setScanConfigs: Dispatch<SetStateAction<ScanConfig[]>>}) {
+interface EditScanConfigDialogProps {
+    setScanConfigs: Dispatch<SetStateAction<ScanConfig[]>>
+    scanConfigs: ScanConfig[]
+    scanConfig?: ScanConfig
+    open: boolean
+    setOpen: Dispatch<SetStateAction<boolean>>
+}
+
+export default function EditScanConfigDialog ({setScanConfigs, scanConfigs, scanConfig, open, setOpen}: EditScanConfigDialogProps) {
   const $user = useStore(user);
-  const [open, setOpen] = useState(false);
 
   const form = useForm<z.infer<typeof scanConfigFormSchema>>({
     resolver: zodResolver(scanConfigFormSchema),
     defaultValues: {
-      name: "",
+      name: scanConfig?.name,
+      scanner_type: scanConfig?.scanner_type,
+      parameters: JSON.stringify(scanConfig?.parameters, null, 2)
     },
   })
 
@@ -82,12 +86,13 @@ export default function CreateScanConfigDialog ({setScanConfigs}: {setScanConfig
           return
         }
 
-        const scanConfig = {
+        const scanConfigBody = {
           ...data,
           active: true,
-          parameters
+          parameters,
+          id: scanConfig?.id
         }
-        const dataResult = ScanConfigSchema.safeParse(scanConfig);
+        const dataResult = ScanConfigSchema.safeParse(scanConfigBody);
 
         if (!dataResult.success)  {
           const errorOpt: ErrorOption = {
@@ -100,13 +105,14 @@ export default function CreateScanConfigDialog ({setScanConfigs}: {setScanConfig
           return
         }
 
-        createScanConfig(scanConfig, $user.access_token).then((result) => {
+        updateScanConfigById(scanConfigBody, $user.access_token).then((result) => {
             if ("error" in result) {
                 toast(result.error);
                 return
             }
-            setScanConfigs((prev) => [...prev, result]);
-            toast("Added new finding successfully!");
+            let tmpScanConfigs = [...scanConfigs].map(s => s.id == result.id ? result : s);
+            setScanConfigs(tmpScanConfigs);
+            toast("Edited finding successfully!");
         });
         setOpen(false);
     }
@@ -114,14 +120,11 @@ export default function CreateScanConfigDialog ({setScanConfigs}: {setScanConfig
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild className="mt-4">
-        <Button>Create scan config</Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Create scan config</DialogTitle>
+          <DialogTitle>Edit scan config</DialogTitle>
           <DialogDescription>
-            Create a new scan config
+            Edit scan config
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -194,7 +197,7 @@ export default function CreateScanConfigDialog ({setScanConfigs}: {setScanConfig
                 </div>
                 <DialogFooter>
                     <Button type="submit">
-                        Create Scan Config
+                        Edit Scan Config
                     </Button>
                 </DialogFooter>
             </form>
