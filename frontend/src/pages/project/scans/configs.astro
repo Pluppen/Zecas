@@ -1,0 +1,16 @@
+---
+import "@/styles/global.css";
+import Layout from '@/layouts/Layout.astro';
+
+import { extractSessionCookie } from "@/lib/utils";
+import {getScanConfigs} from "@/lib/api/scans";
+
+import ScanConfigsOverviewPage from "@/components/pages/ScanConfigsOverviewPage"
+
+const sessionToken = extractSessionCookie(Astro);
+const scanConfigs = await getScanConfigs(sessionToken);
+---
+
+<Layout breadcrumbL1="Scans" breadcrumbL2="Configs" breadcrumbL1Href="/project/scans/overview">
+    <ScanConfigsOverviewPage client:load scanConfigs={scanConfigs} />
+</Layout>

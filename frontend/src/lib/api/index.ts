@@ -16,7 +16,8 @@ const callAPI = async (path: string, options: ApiOptions) => {
         body: options.body ?? undefined
     })
     if (response.status != options.expected_status) {
-        return {error: "Something went wrong fetching scans for project"};
+        console.log(response);
+        return {error: "Something went wrong."};
     }
     return response.json();
 }
