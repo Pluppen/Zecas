@@ -12,6 +12,7 @@ export const bulkCreateTargets = async () => {
     // TODO
 }
 
+
 export const createProjectTarget = async (projectId: string, targetType: string, value: string, access_token) => {
     const body = {
         project_id: projectId,

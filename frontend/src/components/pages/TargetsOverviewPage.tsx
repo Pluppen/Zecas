@@ -9,6 +9,8 @@ import { getProjectTargets } from "@/lib/api/projects";
 import { getColumns } from "@/components/targets/data-table/columns";
 import { DataTable } from "@/components/findings/data-table/data-table";
 
+import CreateTargetDialog from "@/components/targets/create-target-dialog";
+
 
 export default function FindingsManagePage() {
     const $activeProjectId = useStore(activeProjectIdStore);
@@ -28,6 +30,7 @@ export default function FindingsManagePage() {
 
     return (
         <div className="mt-4 container mx-auto ">
+            <CreateTargetDialog setTargets={setTargets} />
             <div className="py-10">
                 <DataTable columns={getColumns(setTargets, targets)} data={targets} filterSettings={{placeholder: "Filter by target", filterKey: "value"}} />
             </div>

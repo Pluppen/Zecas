@@ -9,6 +9,8 @@ import { getProjectApplications, getProjectTargets } from "@/lib/api/projects";
 import { getColumns } from "@/components/applications/data-table/columns";
 import { DataTable } from "@/components/findings/data-table/data-table";
 
+import CreateApplicationDialog from "@/components/applications/create-application-dialog";
+
 
 export default function ApplicationsOverviewPage() {
     const $activeProjectId = useStore(activeProjectIdStore);
@@ -43,6 +45,7 @@ export default function ApplicationsOverviewPage() {
 
     return (
         <div className="mt-4 container mx-auto ">
+            <CreateApplicationDialog setApplications={setApplications} />
             <div className="py-10">
                 <DataTable
                     columns={getColumns(setApplications, applications)}

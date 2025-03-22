@@ -12,12 +12,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 
-import { deleteTargetById } from "@/lib/api/targets"
+import { deleteApplicationById } from "@/lib/api/applications"
 import { user } from "@/lib/userStore"
 
 import { RemoveItemDialog } from "@/components/remove-item-dialog"
 
-export const getColumns = (setTargets: any, targets: any) => {
+export const getColumns = (setApplications: any, applications: any) => {
     return [
       {
           id: "select",
@@ -146,7 +146,7 @@ export const getColumns = (setTargets: any, targets: any) => {
     {
       id: "actions",
       cell: ({ row }) => {
-        const service = row.original
+        const application = row.original
   
         return (
           <DropdownMenu>
@@ -161,28 +161,28 @@ export const getColumns = (setTargets: any, targets: any) => {
               <DropdownMenuItem
                 className="hover:cursor-pointer"
                 onClick={() => {
-                  navigator.clipboard.writeText(service.id)
-                  toast("Copied service ID to clipboard")
+                  navigator.clipboard.writeText(application.id)
+                  toast("Copied application ID to clipboard")
                 }}
               >
-                Copy service ID
+                Copy application ID
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <a target="_blank" href={`/services/${service.id}`}>View details</a>
+                <a target="_blank" href={`/applications/${application.id}`}>View details</a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <div className="hover:cursor-pointer text-red-500">
                 <RemoveItemDialog
                 handleSubmit={async () => {
                   const $user = user.get();
-                  //const result = await deleteTargetById(service.id, $user.access_token);
-                  //if ("error" in result) {
-                  //  toast("Failed to remove service");
-                  //  return;
-                  //}
-                  //const tmpTargets = targets.slice().filter(t => t.id !== service.id);
-                  //setTargets(tmpTargets);
-                  //toast("Successfully removed service");
+                  const result = await deleteApplicationById(application.id, $user.access_token);
+                  if ("error" in result) {
+                    toast("Failed to remove application");
+                    return;
+                  }
+                  const tmpApplications = applications.slice().filter(t => t.id !== application.id);
+                  setApplications(tmpApplications);
+                  toast("Successfully removed application");
                 }}
                   button={
                     <>

@@ -5,12 +5,10 @@ import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
 import { getProjectServices, getProjectTargets } from "@/lib/api/projects";
-import {getTargetFindings, getTargetServices} from "@/lib/api/targets"
-
-import CreateFindingDialog from "@/components/findings/create-finding-dialog";
 
 import { getColumns } from "@/components/services/data-table/columns";
 import { DataTable } from "@/components/findings/data-table/data-table";
+import CreateServiceDialog from "../services/create-service-dialog";
 
 
 export default function ServicesOverviewPage() {
@@ -45,6 +43,7 @@ export default function ServicesOverviewPage() {
 
     return (
         <div className="mt-4 container mx-auto ">
+            <CreateServiceDialog setServices={setServices} />
             <div className="py-10">
                 <DataTable
                     columns={getColumns(setServices, services)}
