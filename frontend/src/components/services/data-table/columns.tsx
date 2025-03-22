@@ -12,12 +12,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 
-import { deleteTargetById } from "@/lib/api/targets"
+import { deleteServiceById } from "@/lib/api/services"
 import { user } from "@/lib/userStore"
 
 import { RemoveItemDialog } from "@/components/remove-item-dialog"
 
-export const getColumns = (setTargets: any, targets: any) => {
+export const getColumns = (setServices: any, services: any) => {
     return [
       {
           id: "select",
@@ -209,14 +209,14 @@ export const getColumns = (setTargets: any, targets: any) => {
                 <RemoveItemDialog
                 handleSubmit={async () => {
                   const $user = user.get();
-                  //const result = await deleteTargetById(service.id, $user.access_token);
-                  //if ("error" in result) {
-                  //  toast("Failed to remove service");
-                  //  return;
-                  //}
-                  //const tmpTargets = targets.slice().filter(t => t.id !== service.id);
-                  //setTargets(tmpTargets);
-                  //toast("Successfully removed service");
+                  const result = await deleteServiceById(service.id, $user.access_token);
+                  if ("error" in result) {
+                    toast("Failed to remove service");
+                    return;
+                  }
+                  const tmpServices = services.slice().filter(t => t.id !== service.id);
+                  setServices(tmpServices);
+                  toast("Successfully removed service");
                 }}
                   button={
                     <>
