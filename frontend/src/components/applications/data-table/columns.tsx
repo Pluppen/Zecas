@@ -1,5 +1,5 @@
 import { type ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, ArrowUpDown, Trash, Edit } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import {
@@ -12,13 +12,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 
-import { deleteApplicationById } from "@/lib/api/applications"
+import { deleteApplicationById, type Application } from "@/lib/api/applications"
 import { user } from "@/lib/userStore"
 
 import { RemoveItemDialog } from "@/components/remove-item-dialog"
+import type { Dispatch, SetStateAction } from "react"
 
-export const getColumns = (setApplications: any, applications: any) => {
-    return [
+export const getColumns = (setApplications: Dispatch<SetStateAction<Application[]>>, applications: Application[]) => {
+    const columnDefinitions: ColumnDef<Application>[] = [
       {
           id: "select",
           header: ({ table }) => (
@@ -161,7 +162,7 @@ export const getColumns = (setApplications: any, applications: any) => {
               <DropdownMenuItem
                 className="hover:cursor-pointer"
                 onClick={() => {
-                  navigator.clipboard.writeText(application.id)
+                  navigator.clipboard.writeText(application.id ?? "Error occured")
                   toast("Copied application ID to clipboard")
                 }}
               >
@@ -175,14 +176,16 @@ export const getColumns = (setApplications: any, applications: any) => {
                 <RemoveItemDialog
                 handleSubmit={async () => {
                   const $user = user.get();
-                  const result = await deleteApplicationById(application.id, $user.access_token);
-                  if ("error" in result) {
-                    toast("Failed to remove application");
-                    return;
+                  if ($user?.access_token && application.id) {
+                    const result = await deleteApplicationById(application.id, $user.access_token);
+                    if ("error" in result) {
+                      toast("Failed to remove application");
+                      return;
+                    }
+                    const tmpApplications = applications.slice().filter(t => t.id !== application.id);
+                    setApplications(tmpApplications);
+                    toast("Successfully removed application");
                   }
-                  const tmpApplications = applications.slice().filter(t => t.id !== application.id);
-                  setApplications(tmpApplications);
-                  toast("Successfully removed application");
                 }}
                   button={
                     <>
@@ -199,4 +202,5 @@ export const getColumns = (setApplications: any, applications: any) => {
       enableHiding: false,
     },
   ]
+  return columnDefinitions
 }

@@ -1,5 +1,5 @@
 "use client"
-import {useState, useEffect} from "react";
+import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -38,7 +38,7 @@ export default function InputForm() {
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: async () => getProjectById($activeProjectId, $user.access_token).then(result => {
+    defaultValues: async () => getProjectById($activeProjectId ?? "", $user?.access_token ?? "").then(result => {
         if ("error" in result) {
           console.error(result.error);
           return {
@@ -51,7 +51,7 @@ export default function InputForm() {
   })
 
   useEffect(() => {
-    if ($activeProjectId) {
+    if ($activeProjectId && $user?.access_token) {
       getProjectById($activeProjectId, $user.access_token).then(result => {
         if ("error" in result) {
           console.error(result.error);
@@ -70,24 +70,26 @@ export default function InputForm() {
   }, [$activeProjectId])
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    updateProject($activeProjectId, data.name, data.description, $user.access_token).then(result => {
-      if ("error" in result) {
-        console.error(result.error);
-        toast("Something went wrong.")
-        return
-      }
-      const newProjectsList = $projects.projects.map(p => {
-        if (p.id == result.id) {
-          return result
+    if ($activeProjectId && $user?.access_token) {
+      updateProject($activeProjectId, data.name, data.description, $user.access_token).then(result => {
+        if ("error" in result) {
+          console.error(result.error);
+          toast("Something went wrong.")
+          return
         }
-        return p
+        const newProjectsList = $projects.projects.map(p => {
+          if (p.id == result.id) {
+            return result
+          }
+          return p
+        });
+        projects.set({
+          projects: newProjectsList,
+        });
+        activeProjectStore.set(result);
+        toast("Successfully updated project settings")
       });
-      projects.set({
-        projects: newProjectsList,
-      });
-      activeProjectStore.set(result);
-      toast("Successfully updated project settings")
-    });
+    }
   }
 
   return (

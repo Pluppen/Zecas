@@ -29,7 +29,7 @@ export function LoginForm({
             action={async (formData) => {
               const email = formData.get("email");
               if (email != null) {
-                await signIn("sendgrid", {email});
+                await signIn("sendgrid", {email} as any); // Using any needed until astro-auth is implementing latest Auth.js core.
               }
             }}
           >

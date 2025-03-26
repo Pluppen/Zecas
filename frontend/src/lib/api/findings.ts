@@ -1,6 +1,25 @@
 import { callAPI } from "@/lib/api";
+import { z } from "zod";
 
-export const getFindings = async (access_token) => {
+export const FindingSchema = z.object({
+    id: z.string(),
+    scan_id: z.string().uuid().optional(),
+    target_id: z.string().uuid(),
+    service_id: z.string().uuid().optional(),
+    application_id: z.string().uuid().optional(),
+    title: z.string(),
+    description: z.string().optional(),
+    severity: z.string(),
+    finding_type: z.string(),
+    details: z.string().optional(),
+    verified: z.boolean().optional(),
+    fixed: z.boolean().optional(),
+    manual: z.boolean().optional()
+});
+
+export type Finding = z.infer<typeof FindingSchema>;
+
+export const getFindings = async (access_token: string) => {
     return await callAPI(`/api/v1/findings`, {
         method: "GET",
         access_token,
@@ -28,7 +47,7 @@ interface FindingParam {
     scan_id?: string
 }
 
-export const createFinding = async (finding: FindingParam, access_token) => {
+export const createFinding = async (finding: FindingParam, access_token: string) => {
     const body: FindingParam = {
         target_id: finding.target_id,
         title: finding.title,
@@ -60,7 +79,7 @@ export const createFinding = async (finding: FindingParam, access_token) => {
     })
 }
 
-export const updateFinding = async (finding: FindingParam, access_token) => {
+export const updateFinding = async (finding: FindingParam, access_token: string) => {
     const body: FindingParam = {
         target_id: finding.target_id,
         title: finding.title,
@@ -88,7 +107,7 @@ export const updateFinding = async (finding: FindingParam, access_token) => {
     })
 }
 
-export const removeFinding = async (findingId: string, access_token) => {
+export const removeFinding = async (findingId: string, access_token: string) => {
     return await callAPI(`/api/v1/findings/${findingId}`, {
         method: 'DELETE',
         access_token,

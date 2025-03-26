@@ -5,6 +5,7 @@ import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
 import { getProjectTargets } from "@/lib/api/projects";
+import { type Target } from "@/lib/api/targets";
 
 import { getColumns } from "@/components/targets/data-table/columns";
 import { DataTable } from "@/components/findings/data-table/data-table";
@@ -14,11 +15,11 @@ import CreateTargetDialog from "@/components/targets/create-target-dialog";
 
 export default function FindingsManagePage() {
     const $activeProjectId = useStore(activeProjectIdStore);
-    const [targets, setTargets] = useState({});
+    const [targets, setTargets] = useState<Target[]>([]);
     const $user = useStore(user);
 
     useEffect(() => {
-        if($activeProjectId) {
+        if($activeProjectId && $user?.access_token) {
             getProjectTargets($activeProjectId, $user.access_token).then(async targets => {
                 if ("error" in targets) {
                     return
@@ -26,7 +27,7 @@ export default function FindingsManagePage() {
                 setTargets(targets);
             });
         }
-    }, [$activeProjectId, $user])
+    }, [$activeProjectId, $user?.access_token])
 
     return (
         <div className="mt-4 container mx-auto ">

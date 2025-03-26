@@ -6,25 +6,26 @@ import {user} from "@/lib/userStore";
 
 import { getProjectFindings } from "@/lib/api/projects";
 
+import { type Finding } from "@/lib/api/findings"
+
 import SimpleTable from "@/components/simple-table";
-import PieChart from "@/components/pie-chart";
 
 export default function FindingsOverviewPage() {
     const $activeProjectId = useStore(activeProjectIdStore);
     const $user = useStore(user);
 
-    const [findings, setFindings] = useState([]);
-    const [severityCounts, setSeverityCounts] = useState({})
+    const [findings, setFindings] = useState<Finding[]>([]);
+    const [severityCounts, setSeverityCounts] = useState<Record<string, number>>({})
 
     useEffect(() => {
-        if($activeProjectId) {
+        if($activeProjectId && $user?.access_token) {
             getProjectFindings($activeProjectId, $user.access_token).then(result => {
                 if ("error" in result) {
                     return
                 }
                 setFindings(result);
                 let severityCountsTmp = {...severityCounts}
-                result.forEach(f => {
+                result.forEach((f: Finding) => {
                     if (f.severity in severityCountsTmp) {
                         severityCountsTmp[f.severity] += 1
                     } else {
@@ -34,41 +35,7 @@ export default function FindingsOverviewPage() {
                 setSeverityCounts(severityCountsTmp)
             })
         }
-    }, [$activeProjectId, $user])
-
-    const chartData = [
-        { severity: "critical", count: severityCounts["critical"] ?? 0, fill: "var(--color-critical)" },
-        { severity: "high", count: severityCounts["high"] ?? 0, fill: "var(--color-high)" },
-        { severity: "medium", count: severityCounts["medium"] ?? 0, fill: "var(--color-medium)" },
-        { severity: "low", count: severityCounts["low"] ?? 0, fill: "var(--color-low)" },
-        { severity: "unknown", count: severityCounts["unknown"] ?? 0, fill: "var(--color-unknown)" },
-    ]
-
-    const chartConfig = {
-        count: {
-            label: "Count",
-        },
-        unknown: {
-            label: "Unknown",
-            color: "hsl(var(--chart-1))",
-        },
-        low: {
-            label: "Low",
-            color: "hsl(var(--chart-2))",
-        },
-        medium: {
-            label: "Medium",
-            color: "hsl(var(--chart-3))",
-        },
-        high: {
-            label: "High",
-            color: "hsl(var(--chart-4))",
-        },
-        critical: {
-            label: "Critical",
-            color: "hsl(var(--chart-5))",
-        },
-    } satisfies ChartConfig
+    }, [$activeProjectId, $user?.access_token])
 
     return (
         <div className="mt-8 w-full">
@@ -119,9 +86,6 @@ export default function FindingsOverviewPage() {
                             verified: s.verified ? "Yes" : "No",
                         }))}
                     />
-                </div>
-                <div className="">
-                    <PieChart chartConfig={chartConfig} chartData={chartData} />
                 </div>
             </div>
         </div>

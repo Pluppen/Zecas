@@ -3,18 +3,22 @@ import "@/styles/global.css";
 import Layout from "@/layouts/Layout.astro";
 
 import { extractSessionCookie } from "@/lib/utils";
-import {getScanById, getScanConfigById} from "@/lib/api/scans";
 import {getService} from "@/lib/api/services";
 import { getTargetById } from "@/lib/api/targets";
 
 const { serviceId } = Astro.params;
+
+if (!serviceId) {
+    Astro.redirect("/");
+    return
+}
 
 const sessionToken = extractSessionCookie(Astro);
 const service = await getService(serviceId, sessionToken)
 const target = await getTargetById(service.target_id, sessionToken);
 ---
 
-<Layout client:load breadcrumbL1="Services" breadcrumbL2={service.title} breadcrumbL1Href="/project/targets/services">
+<Layout breadcrumbL1="Services" breadcrumbL2={service.title} breadcrumbL1Href="/project/targets/services">
     <div class="container mx-auto mt-8">
         <h1 class="text-2xl mb-2">{service.title}</h1>
         <p>Target: {target.value}</p>

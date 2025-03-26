@@ -5,7 +5,7 @@ import { defineConfig } from 'auth-astro';
 import PostgresAdapter from "@auth/pg-adapter"
 import pg from 'pg';
 
-const { DATABASE_HOST, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_USER } = loadEnv(process.env.NODE_ENV, process.cwd(), "");
+const { DATABASE_HOST, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_USER } = loadEnv(process.env.NODE_ENV ?? "", process.cwd(), "");
 
 const pool = new pg.Pool({
   host: DATABASE_HOST,

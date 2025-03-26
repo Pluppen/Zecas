@@ -10,16 +10,18 @@ import CreateFindingDialog from "@/components/findings/create-finding-dialog";
 
 import { getColumns } from "../findings/data-table/columns";
 import { DataTable } from "../findings/data-table/data-table";
+import type { Target } from "@/lib/api/targets";
+import { type Finding } from "@/lib/api/findings";
 
 
 export default function FindingsManagePage() {
     const $activeProjectId = useStore(activeProjectIdStore);
-    const [findings, setFindings] = useState([]);
-    const [targetsMap, setTargetsMap] = useState({});
+    const [findings, setFindings] = useState<Finding[]>([]);
+    const [targetsMap, setTargetsMap] = useState<Record<string, Target>>({});
     const $user = useStore(user);
 
     useEffect(() => {
-        if($activeProjectId) {
+        if($activeProjectId && $user?.access_token) {
             getProjectFindings($activeProjectId, $user.access_token).then(result => {
                 if ("error" in result) {
                     return
@@ -31,8 +33,8 @@ export default function FindingsManagePage() {
                 if ("error" in result) {
                     return
                 }
-                const targetsMapTmp = {}
-                result.forEach(target => {
+                const targetsMapTmp: Record<string, Target> = {}
+                result.forEach((target: Target) => {
                     if (!(target.id in targetsMapTmp)) {
                         targetsMapTmp[target.id] = {...target}
                     }
@@ -40,7 +42,7 @@ export default function FindingsManagePage() {
                 setTargetsMap(targetsMapTmp);
             });
         }
-    }, [$activeProjectId, $user])
+    }, [$activeProjectId, $user?.access_token])
 
     return (
         <div className="mt-8 container mx-auto ">

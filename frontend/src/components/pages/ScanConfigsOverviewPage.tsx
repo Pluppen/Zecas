@@ -2,7 +2,7 @@ import {useState, useEffect} from "react";
 
 import CreateScanConfigDialog from '@/components/create-scan-config-dialog';
 import EditScanConfigDialog from '@/components/edit-scan-config-dialog';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deleteScanConfigById, type ScanConfig } from "@/lib/api/scans";
@@ -61,7 +61,7 @@ export default function ScanConfigOverviewPage(props: ScanConfigOverviewPageProp
                         <CardFooter className="flex-grow">
                             <RemoveItemDialog
                                 handleSubmit={async () => {
-                                    if ($user.access_token && scanConfig.id) {
+                                    if ($user?.access_token && scanConfig.id) {
                                         const result = await deleteScanConfigById(scanConfig.id, $user.access_token)
                                         if ("error" in result) {
                                             toast(result.error);

@@ -16,7 +16,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { activeProjectStore, projects, activeProjectIdStore, type Project } from "@/lib/projectsStore";
+import { activeProjectStore, projects, activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from '@nanostores/react';
 
 export function ProjectSwitcher() {
@@ -27,7 +27,7 @@ export function ProjectSwitcher() {
 
   const setActiveProjectId = (projectId: string) => {
     const activeProject = $projectData.projects.filter(project => project.id === projectId)[0];
-    if (activeProject.id !== undefined) {
+    if (activeProject.id) {
       activeProjectIdStore.set(activeProject.id);
       activeProjectStore.set(activeProject);
     }

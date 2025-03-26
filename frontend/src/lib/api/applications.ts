@@ -2,6 +2,7 @@ import { callAPI } from "@/lib/api";
 import {z} from "zod";
 
 export const ApplicationSchema = z.object({
+    id: z.string().optional(),
     project_id: z.string().uuid(),
     name: z.string(),
     type: z.string(),

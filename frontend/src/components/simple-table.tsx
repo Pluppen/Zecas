@@ -12,7 +12,9 @@ import {
 
   interface SimpleTableProps {
     headers: Record<"key" | "label", string>[]
-    tableRows: object[]
+    tableRows: {
+      [key: string]: any
+    }[]
     tableCaption?: string
   }
   

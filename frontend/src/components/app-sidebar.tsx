@@ -1,19 +1,11 @@
 import * as React from "react"
 import {
-  AudioWaveform,
   BookOpen,
-  Bot,
-  Command,
-  ComputerIcon,
   Frame,
-  GalleryVerticalEnd,
-  LayoutDashboard,
-  Map,
   PieChart,
   Radar,
   Settings2,
   ShieldAlert,
-  SquareTerminal,
   Target,
   Warehouse,
 } from "lucide-react"
@@ -155,10 +147,6 @@ const data = {
         {
           title: "Targets",
           url: "/project/settings/targets",
-        },
-        {
-          title: "Scanners",
-          url: "#",
         },
       ],
     },

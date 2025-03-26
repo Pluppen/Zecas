@@ -7,4 +7,4 @@ export type User = {
     access_token?: string
 }
 
-export const user = atom<User>();
+export const user = atom<User | undefined>();

@@ -20,6 +20,6 @@ export const projects = atom<ProjectData>({
     projects: []
 });
 
-export const activeProjectStore = atom<Project | null>(null);
+export const activeProjectStore = atom<Project | undefined>();
 
-export const activeProjectIdStore = persistentAtom('activeProjectId', undefined);
+export const activeProjectIdStore = persistentAtom('activeProjectId')

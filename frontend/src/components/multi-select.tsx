@@ -13,8 +13,8 @@ import {
 import { Command as CommandPrimitive } from "cmdk";
 
 interface MultiSelectProps {
-    data: Record<"value" | "label", string>;
-    selected: string[];
+    data: Record<"value" | "label", string>[];
+    selected: Record<"value" | "label", string>[];
     setSelected: any;
     placeholder: string;
 }
@@ -24,7 +24,7 @@ export default function MultiSelect({data, selected, setSelected, placeholder}: 
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
 
-  const handleUnselect = React.useCallback((listItem) => {
+  const handleUnselect = React.useCallback((listItem: Record<"value" | "label", string>) => {
     let selectedCopy = selected.slice().filter(s => s.value !== listItem.value);
     setSelected(selectedCopy);
   }, []);
@@ -107,7 +107,7 @@ export default function MultiSelect({data, selected, setSelected, placeholder}: 
                         e.preventDefault();
                         e.stopPropagation();
                       }}
-                      onSelect={(value) => {
+                      onSelect={() => {
                         setInputValue("");
                         const newValues = [...selected, listItem]
                         setSelected(newValues);

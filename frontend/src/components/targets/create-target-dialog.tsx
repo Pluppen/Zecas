@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import {useEffect, useState, type Dispatch, type SetStateAction} from "react";
+import {useState, type Dispatch, type SetStateAction} from "react";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import {
@@ -15,7 +15,6 @@ import { z } from "zod"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -34,8 +33,7 @@ import { toast } from "sonner";
 import { activeProjectIdStore } from "@/lib/projectsStore"
 import { useStore } from "@nanostores/react"
 import { user } from "@/lib/userStore";
-import { createProjectTarget } from "@/lib/api/targets";
-import { getProjectTargets } from "@/lib/api/projects";
+import { createProjectTarget, type Target } from "@/lib/api/targets";
 
 const FormSchema = z.object({
   targetType: z.string(),
@@ -65,7 +63,7 @@ const FormSchema = z.object({
 });
 
 interface CreateTargetDialogProps {
-    setTargets: Dispatch<SetStateAction<any>>
+    setTargets: Dispatch<SetStateAction<Target[]>>
 }
 
 export default function CreateTargetDialog({setTargets}: CreateTargetDialogProps) {
@@ -79,27 +77,29 @@ export default function CreateTargetDialog({setTargets}: CreateTargetDialogProps
   })
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    let targetValue = ""
+    if ($user?.access_token) {
+      let targetValue = ""
 
-    if (targetType == "ip" && data.ipAddress) {
-      targetValue = data.ipAddress;
-    } else if (targetType == "cidr" && data.cidrRange) {
-      targetValue = data.cidrRange;
-    } else if (targetType == "domain" && data.domain) {
-      targetValue = data.domain;
-    } else {
-      throw new Error("Something went wrong");
-    }
-
-    createProjectTarget($activeProjectId ?? "", data.targetType, targetValue, $user.access_token).then(res => {
-      if ("err" in res) {
-        toast("Something went wrong.")
-        return
+      if (targetType == "ip" && data.ipAddress) {
+        targetValue = data.ipAddress;
+      } else if (targetType == "cidr" && data.cidrRange) {
+        targetValue = data.cidrRange;
+      } else if (targetType == "domain" && data.domain) {
+        targetValue = data.domain;
+      } else {
+        throw new Error("Something went wrong");
       }
-      setTargets((prev) => [...prev, res]);
-      toast("Successfully added new target.")
-      setOpen(false);
-    })
+
+      createProjectTarget($activeProjectId ?? "", data.targetType, targetValue, $user.access_token).then(res => {
+        if ("err" in res) {
+          toast("Something went wrong.")
+          return
+        }
+        setTargets((prev) => [...prev, res]);
+        toast("Successfully added new target.")
+        setOpen(false);
+      })
+    }
   }
 
   const targetType = form.watch("targetType");

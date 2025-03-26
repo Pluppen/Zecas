@@ -26,7 +26,7 @@ interface Props {
   breadcrumbL1Href: string
   breadcrumbL2: string
   projectData: {
-    activeProject: Project
+    activeProject?: Project
     projects: Project[]
   }
   activeUser: User

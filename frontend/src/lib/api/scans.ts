@@ -1,6 +1,17 @@
 import { callAPI } from "@/lib/api";
 import { z } from "zod";
 
+export const ScanSchema = z.object({
+    id: z.string().optional(),
+    project_id: z.string().uuid(),
+    scan_config_id: z.string().uuid(),
+    status: z.string().optional(),
+    raw_results: z.string().optional(),
+    error: z.string().optional(),
+})
+
+export type Scan = z.infer<typeof ScanSchema>
+
 export type ScannerType = "nmap" | "dns" | "subdomain" | "nuclei" | "httpx";
 
 export const ScannerTypeEnum = z.enum([
