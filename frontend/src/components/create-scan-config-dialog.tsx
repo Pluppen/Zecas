@@ -6,7 +6,6 @@ import { useForm, type ErrorOption } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -22,10 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import MultiSelect from "@/components/multi-select"
 import { Textarea } from "@/components/ui/textarea";
 
-import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
 import {type ScanConfig, type ScannerType, ScanConfigSchema, ScannerTypeEnum, createScanConfig} from "@/lib/api/scans";
@@ -35,7 +32,6 @@ import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -69,7 +65,7 @@ export default function CreateScanConfigDialog ({setScanConfigs}: {setScanConfig
   })
 
   const onSubmit = (data: z.infer<typeof scanConfigFormSchema>) => {
-    if ($user.access_token) {
+    if ($user?.access_token) {
         let parameters;
         try {
           // TODO: Make sure this parsing gets done safely

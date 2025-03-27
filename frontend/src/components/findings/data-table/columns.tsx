@@ -16,11 +16,12 @@ import SeverityBadge from "../severity-badge"
 import { RemoveItemDialog } from "@/components/remove-item-dialog"
 import EditFindingDialog from "../edit-finding-dialog"
 
-import { removeFinding } from "@/lib/api/findings"
+import { removeFinding, type Finding } from "@/lib/api/findings"
 import { user } from "@/lib/userStore"
+import type { Dispatch, SetStateAction } from "react"
 
-export const getColumns = (setFindings: any, findings: any) => {
-    return [
+export const getColumns = (setFindings: Dispatch<SetStateAction<Finding[]>>, findings: Finding[]) => {
+    const columnDefinitions: ColumnDef<Finding>[] = [
       {
           id: "select",
           header: ({ table }) => (
@@ -191,14 +192,16 @@ export const getColumns = (setFindings: any, findings: any) => {
                 <RemoveItemDialog
                 handleSubmit={() => {
                   const $user = user.get()
-                  removeFinding(finding.id, $user.access_token).then(result => {
-                    if ("error" in result) {
-                      toast(result.error);
-                    }
-                    const findingsTmp = [...findings].filter(f => f.id !== finding.id);
-                    setFindings(findingsTmp);
-                    toast(result.message);
-                  })
+                  if ($user?.access_token) {
+                    removeFinding(finding.id, $user.access_token).then(result => {
+                      if ("error" in result) {
+                        toast(result.error);
+                      }
+                      const findingsTmp = [...findings].filter(f => f.id !== finding.id);
+                      setFindings(findingsTmp);
+                      toast(result.message);
+                    })
+                  }
                 }}
                   button={
                     <>
@@ -215,4 +218,5 @@ export const getColumns = (setFindings: any, findings: any) => {
       enableHiding: false,
     },
   ]
+  return columnDefinitions;
 }

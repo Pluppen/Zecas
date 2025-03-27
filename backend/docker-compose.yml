@@ -15,19 +15,18 @@ services:
   #    - postgres
   #    - rabbitmq
 
-  #api:
-  #  build: .
-  #  ports:
-  #    - "8080:8080"
-  #  environment:
-  #    - DB_HOST=postgres
-  #    - DB_USER=scanuser
-  #    - DB_PASSWORD=scanpass
-  #    - DB_NAME=scandb
-  #    - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-  #  depends_on:
-  #    - postgres
-  #    - rabbitmq
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://scanuser:scanpass@postgres:5432/scandb
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - zecas
 
   postgres:
     image: postgres:14-alpine
@@ -39,12 +38,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - zecas
 
   rabbitmq:
     image: rabbitmq:3-management
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - zecas
 
 volumes:
   postgres_data:

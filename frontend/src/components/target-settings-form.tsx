@@ -4,12 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { API_URL } from "@/config"
 import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -30,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import { createProjectTarget } from "@/lib/api/targets";
+import { createProjectTarget, type Target } from "@/lib/api/targets";
 import { getProjectTargets } from "@/lib/api/projects";
 import { user } from "@/lib/userStore";
 
@@ -65,46 +63,47 @@ const FormSchema = z.object({
 export default function InputForm() {
   const $activeProjectId = useStore(activeProjectIdStore);
   const $user = useStore(user);
+  const [targets, setTargets] = useState<Target[]>([]);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {},
   })
 
-  const [targets, setTargets] = useState([]);
-
   useEffect(() => {
-    if ($activeProjectId) {
+    if ($activeProjectId && $user?.access_token) {
       getProjectTargets($activeProjectId, $user.access_token).then(targets => {
         setTargets(targets);
       });
     }
-  }, [$activeProjectId])
+  }, [$activeProjectId, $user?.access_token])
 
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    let targetValue = ""
+    if ($activeProjectId && $user?.access_token) {
+      let targetValue = ""
 
-    if (targetType == "ip" && data.ipAddress) {
-      targetValue = data.ipAddress;
-    } else if (targetType == "cidr" && data.cidrRange) {
-      targetValue = data.cidrRange;
-    } else if (targetType == "domain" && data.domain) {
-      targetValue = data.domain;
-    } else {
-      throw new Error("Something went wrong");
-    }
-
-    createProjectTarget($activeProjectId ?? "", data.targetType, targetValue, $user.access_token).then(res => {
-      if ("err" in res) {
-        toast("Something went wrong.")
-        return
+      if (targetType == "ip" && data.ipAddress) {
+        targetValue = data.ipAddress;
+      } else if (targetType == "cidr" && data.cidrRange) {
+        targetValue = data.cidrRange;
+      } else if (targetType == "domain" && data.domain) {
+        targetValue = data.domain;
+      } else {
+        throw new Error("Something went wrong");
       }
-      let targetsCopy = targets.slice();
-      targetsCopy.push(res);
-      setTargets(targetsCopy);
-      toast("Successfully added new target.")
-    })
+
+      createProjectTarget($activeProjectId, data.targetType, targetValue, $user.access_token).then(res => {
+        if ("err" in res) {
+          toast("Something went wrong.")
+          return
+        }
+        let targetsCopy = targets.slice();
+        targetsCopy.push(res);
+        setTargets(targetsCopy);
+        toast("Successfully added new target.")
+      })
+    }
   }
 
   const targetType = form.watch("targetType");

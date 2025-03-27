@@ -1,5 +1,5 @@
 import { type ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, ArrowUpDown, Trash, Edit } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import {
@@ -12,13 +12,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 
-import { deleteServiceById } from "@/lib/api/services"
+import { deleteServiceById, type Service } from "@/lib/api/services"
 import { user } from "@/lib/userStore"
 
 import { RemoveItemDialog } from "@/components/remove-item-dialog"
+import type { Dispatch, SetStateAction } from "react"
 
-export const getColumns = (setServices: any, services: any) => {
-    return [
+export const getColumns = (setServices: Dispatch<SetStateAction<Service[]>>, services: Service[]) => {
+    const columnDefinitions: ColumnDef<Service>[] = [
       {
           id: "select",
           header: ({ table }) => (
@@ -195,7 +196,7 @@ export const getColumns = (setServices: any, services: any) => {
               <DropdownMenuItem
                 className="hover:cursor-pointer"
                 onClick={() => {
-                  navigator.clipboard.writeText(service.id)
+                  navigator.clipboard.writeText(service.id ?? "Error occured")
                   toast("Copied service ID to clipboard")
                 }}
               >
@@ -209,14 +210,16 @@ export const getColumns = (setServices: any, services: any) => {
                 <RemoveItemDialog
                 handleSubmit={async () => {
                   const $user = user.get();
-                  const result = await deleteServiceById(service.id, $user.access_token);
-                  if ("error" in result) {
-                    toast("Failed to remove service");
-                    return;
+                  if ($user?.access_token && service.id){
+                    const result = await deleteServiceById(service.id, $user.access_token);
+                    if ("error" in result) {
+                      toast("Failed to remove service");
+                      return;
+                    }
+                    const tmpServices = services.slice().filter(t => t.id !== service.id);
+                    setServices(tmpServices);
+                    toast("Successfully removed service");
                   }
-                  const tmpServices = services.slice().filter(t => t.id !== service.id);
-                  setServices(tmpServices);
-                  toast("Successfully removed service");
                 }}
                   button={
                     <>
@@ -233,4 +236,5 @@ export const getColumns = (setServices: any, services: any) => {
       enableHiding: false,
     },
   ]
+  return columnDefinitions
 }

@@ -1,9 +1,6 @@
 ---
 import "@/styles/global.css";
 import Layout from '../layouts/Layout.astro';
-import BarChartMixed from '@/components/bar-chart-mixed';
-import RadarChart from '@/components/radar-chart';
-import SimpleBarChart from '@/components/simple-bar-chart';
 
 import SimpleTable from '@/components/simple-table';
 ---
@@ -12,9 +9,6 @@ import SimpleTable from '@/components/simple-table';
     <div>
     </div>
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-        <BarChartMixed client:load />
-        <RadarChart client:load />
-        <SimpleBarChart client:load />
         <div class="col-span-2">
             <SimpleTable
                 headers={[{key: "a", label: "Col 1"}]}

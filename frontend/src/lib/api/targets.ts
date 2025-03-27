@@ -13,7 +13,7 @@ export const bulkCreateTargets = async () => {
 }
 
 
-export const createProjectTarget = async (projectId: string, targetType: string, value: string, access_token) => {
+export const createProjectTarget = async (projectId: string, targetType: string, value: string, access_token: string) => {
     const body = {
         project_id: projectId,
         target_type: targetType,
@@ -40,6 +40,14 @@ export type Target = {
     target_type: string,
     value: string,
     metadata: JSON
+}
+
+export type TargetRelation = {
+    id: string,
+    source_id: string,
+    destination_id: string,
+    relation_type: string,
+    metadata: string,
 }
 
 export const updateTargetById = async (target: Target, access_token: string) => {

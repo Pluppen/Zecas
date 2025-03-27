@@ -7,13 +7,17 @@ import {getScanById, getScanConfigById} from "@/lib/api/scans";
 
 const { scanId } = Astro.params;
 
+if(!scanId) {
+    Astro.redirect("/")
+    return
+}
+
 const sessionToken = extractSessionCookie(Astro);
 const scan = await getScanById(scanId, sessionToken)
 const scanConfig = await getScanConfigById(scan.scan_config_id, sessionToken);
-//const target = await fetch(`${API_URL}/api/v1/targets/${findingData.target_id}`).then(res => res.json())
 ---
 
-<Layout client:load breadcrumbL1="Scans" breadcrumbL2={scan.id} breadcrumbL1Href="/project/scans/overview">
+<Layout breadcrumbL1="Scans" breadcrumbL2={scan.id} breadcrumbL1Href="/project/scans/overview">
     <div class="container mx-auto mt-8">
         <h1 class="text-2xl mb-2">Scan Information</h1>
         <p>Scan ID: <span class="bg-muted px-1">{scan.id}</span></p>

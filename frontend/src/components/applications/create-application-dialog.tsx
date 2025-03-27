@@ -22,20 +22,21 @@ import { useStore } from "@nanostores/react";
 
 import { getProjectServices, getProjectTargets } from "@/lib/api/projects";
 import { createApplication } from "@/lib/api/applications";
+import { type Target } from "@/lib/api/targets";
+import { type Service } from "@/lib/api/services";
 
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { user } from "@/lib/userStore";
-import {ApplicationSchema} from "@/lib/api/applications"
+import {ApplicationSchema, type Application} from "@/lib/api/applications"
 
 const NewApplicationSchema = ApplicationSchema.extend({
     targets: z.array(z.object({
@@ -50,13 +51,13 @@ const NewApplicationSchema = ApplicationSchema.extend({
 
 type NewApplicationType = z.infer<typeof NewApplicationSchema>
 
-export default function CreateApplicationDialog ({setApplications}: {setApplications: Dispatch<SetStateAction<any>>}) {
+export default function CreateApplicationDialog ({setApplications}: {setApplications: Dispatch<SetStateAction<Application[]>>}) {
   const $activeProjectId = useStore(activeProjectIdStore);
   const $user = useStore(user);
 
   const [open, setOpen] = useState(false);
-  const [targets, setTargets] = useState([]);
-  const [services, setServices] = useState([]);
+  const [targets, setTargets] = useState<Target[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
 
   const form = useForm<NewApplicationType>({
     resolver: zodResolver(NewApplicationSchema),
@@ -67,7 +68,7 @@ export default function CreateApplicationDialog ({setApplications}: {setApplicat
   })
 
   useEffect(() => {
-    if($activeProjectId) {
+    if($activeProjectId && $user?.access_token) {
         getProjectTargets($activeProjectId, $user.access_token).then(result => {
             setTargets(result);
         })
@@ -76,14 +77,13 @@ export default function CreateApplicationDialog ({setApplications}: {setApplicat
             setServices(result);
         })
     }
-  }, [$activeProjectId, $user])
+  }, [$activeProjectId, $user?.access_token])
 
   const onSubmit = (data: NewApplicationType) => {
-    if($activeProjectId) {
-        let rawData;
+    if($activeProjectId && $user?.access_token) {
         try {
             if (data.metadata) {
-                rawData = JSON.parse(data.metadata);
+                JSON.parse(data.metadata);
             }
         } catch (e) {
             const errorOpt: ErrorOption = {
@@ -105,7 +105,7 @@ export default function CreateApplicationDialog ({setApplications}: {setApplicat
                     host_target: target.value,
                     service_id: service.value
                 }
-                createApplication(newApplication, $user.access_token).then((result) => {
+                createApplication(newApplication, $user.access_token ?? "").then((result) => {
                     if ("error" in result) {
                         toast(result.error);
                         return
@@ -234,7 +234,7 @@ export default function CreateApplicationDialog ({setApplications}: {setApplicat
                             <FormLabel>Services</FormLabel>
                             <FormControl>
                                 <MultiSelect
-                                    data={services.map(t => ({value: t.id, label: `${t.banner ?? t.port} (${t.target_id})`}))}
+                                    data={services.map(t => ({value: t.id ?? "", label: `${t.banner ?? t.port} (${t.target_id})`}))}
                                     placeholder="Select service(s)"
                                     selected={field.value}
                                     setSelected={field.onChange}

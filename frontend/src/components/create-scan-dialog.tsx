@@ -24,7 +24,8 @@ import MultiSelect from "@/components/multi-select"
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import { getScanConfigs, startNewScan } from "@/lib/api/scans";
+import { getScanConfigs, startNewScan, type ScanConfig } from "@/lib/api/scans";
+import {type Target} from "@/lib/api/targets";
 import { getProjectTargets } from "@/lib/api/projects";
 import { toast } from "sonner";
 import { user } from "@/lib/userStore";
@@ -33,19 +34,21 @@ export default function CreateScanDialog () {
   const $activeProjectId = useStore(activeProjectIdStore);
   const $user = useStore(user);
 
-  const [targets, setTargets] = useState([]);
-  const [scanConfigs, setScanConfigs] = useState([]);
-  const [selectedTargets, setSelectedTargets] = useState([]);
+  const [targets, setTargets] = useState<Target[]>([]);
+  const [scanConfigs, setScanConfigs] = useState<ScanConfig[]>([]);
+  const [selectedTargets, setSelectedTargets] = useState<Record<"label" | "value", string>[]>([]);
   const [selectedScanConfig, setSelectedScanConfig] = useState("");
 
   useEffect(() => {
-    getScanConfigs($user.access_token).then(result => {
-        setScanConfigs(result);
-    });
+    if ($user?.access_token) {
+      getScanConfigs($user.access_token).then(result => {
+          setScanConfigs(result);
+      });
+    }
   }, [$user])
 
   useEffect(() => {
-    if ($activeProjectId) {
+    if ($activeProjectId && $user?.access_token) {
       getProjectTargets($activeProjectId, $user.access_token).then(targetsData => {
         setTargets(targetsData);
       });
@@ -55,7 +58,7 @@ export default function CreateScanDialog () {
   const handleSubmit = () => {
     const targetList = selectedTargets.map(t => t.value);
 
-    if($activeProjectId) {
+    if($activeProjectId && $user?.access_token) {
         startNewScan($activeProjectId, selectedScanConfig, targetList, $user.access_token).then(res => {
             if ("error" in res) {
                 toast(res.error);
@@ -90,7 +93,7 @@ export default function CreateScanDialog () {
                     {scanConfigs.map(scanConfig => (
                         <SelectItem
                             key={"scan-config-"+scanConfig.id}
-                            value={scanConfig.id}
+                            value={scanConfig.id ?? ""}
                         >
                             {scanConfig.name}
                         </SelectItem>

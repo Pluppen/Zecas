@@ -1,5 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, ArrowUpDown, Trash, Edit } from "lucide-react"
+import { type Dispatch, type SetStateAction} from "react";
+import { MoreHorizontal, ArrowUpDown, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import {
@@ -12,13 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 
-import { deleteTargetById } from "@/lib/api/targets"
+import { deleteTargetById, type Target } from "@/lib/api/targets"
 import { user } from "@/lib/userStore"
 
 import { RemoveItemDialog } from "@/components/remove-item-dialog"
 
-export const getColumns = (setTargets: any, targets: any) => {
-    return [
+export const getColumns = (setTargets: Dispatch<SetStateAction<Target[]>>, targets: Target[]) => {
+    const columnDefinitions: ColumnDef<Target>[] = [
       {
           id: "select",
           header: ({ table }) => (
@@ -89,7 +90,7 @@ export const getColumns = (setTargets: any, targets: any) => {
           )
         },
       cell: ({row, column}) => (
-        <span className="pl-3 uppercase">{row.getValue(column.id)?.length ?? 0}</span>
+        <span className="pl-3 uppercase">{(row.getValue(column.id) as Array<any> | undefined)?.length ?? 0}</span>
       ),
     },
     {
@@ -106,7 +107,7 @@ export const getColumns = (setTargets: any, targets: any) => {
           )
         },
       cell: ({row, column}) => (
-        <span className="pl-3 uppercase">{row.getValue(column.id)?.length ?? 0}</span>
+        <span className="pl-3 uppercase">{(row.getValue(column.id) as Array<any> | undefined)?.length ?? 0}</span>
       ),
     },
     {
@@ -175,14 +176,16 @@ export const getColumns = (setTargets: any, targets: any) => {
                 <RemoveItemDialog
                 handleSubmit={async () => {
                   const $user = user.get();
-                  const result = await deleteTargetById(target.id, $user.access_token);
-                  if ("error" in result) {
-                    toast("Failed to remove target");
-                    return;
+                  if ($user?.access_token) {
+                    const result = await deleteTargetById(target.id, $user.access_token);
+                    if ("error" in result) {
+                      toast("Failed to remove target");
+                      return;
+                    }
+                    const tmpTargets = targets.slice().filter(t => t.id !== target.id);
+                    setTargets(tmpTargets);
+                    toast("Successfully removed target");
                   }
-                  const tmpTargets = targets.slice().filter(t => t.id !== target.id);
-                  setTargets(tmpTargets);
-                  toast("Successfully removed target");
                 }}
                   button={
                     <>
@@ -199,4 +202,5 @@ export const getColumns = (setTargets: any, targets: any) => {
       enableHiding: false,
     },
   ]
+  return columnDefinitions
 }

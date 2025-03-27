@@ -1,12 +1,9 @@
 "use client"
 
 import {
-  BadgeCheck,
   Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
-  Sparkles,
 } from "lucide-react"
 
 import {
@@ -30,14 +27,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
+import { type User } from "@/lib/userStore"
+
 export function NavUser({
   user,
 }: {
-  user: {
-    name: string
-    email: string
-    image?: string
-  }
+  user: User | undefined
 }) {
   const { isMobile } = useSidebar()
 

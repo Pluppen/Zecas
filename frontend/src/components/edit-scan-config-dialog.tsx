@@ -1,4 +1,4 @@
-import {useState, type Dispatch, type SetStateAction} from "react";
+import {type Dispatch, type SetStateAction} from "react";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useForm, type ErrorOption } from "react-hook-form"
@@ -73,7 +73,7 @@ export default function EditScanConfigDialog ({setScanConfigs, scanConfigs, scan
   })
 
   const onSubmit = (data: z.infer<typeof scanConfigFormSchema>) => {
-    if ($user.access_token) {
+    if ($user?.access_token) {
         let parameters;
         try {
           // TODO: Make sure this parsing gets done safely

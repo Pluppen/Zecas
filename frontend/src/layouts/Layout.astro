@@ -3,21 +3,22 @@ import Page from "@/app/dashboard/page";
 import { Toaster } from "@/components/ui/sonner"
 import { getSession } from "auth-astro/server";
 import { extractSessionCookie } from "@/lib/utils";
+import { getProjects } from "@/lib/api/projects";
+import type { User } from "@/lib/userStore";
 
 const session = await getSession(Astro.request);
 
+if (!session || !session.user) {
+	Astro.redirect("/");
+	return 
+}
+
+const user: User = session.user as User;
+
 const sessionToken = extractSessionCookie(Astro);
 
-console.log(sessionToken);
-
 const defualtSidebarOpen = Astro.cookies.get("sidebar:state")?.value === 'true';
-const response = await fetch(import.meta.env.API_URL+'/api/v1/projects', {
-	headers: {
-		"Authorization": `Bearer ${sessionToken}`
-	}
-});
-const projects = await response.json();
-
+const projects = await getProjects(sessionToken);
 
 const {breadcrumbL1, breadcrumbL2, breadcrumbL1Href} = Astro.props;
 ---
@@ -34,12 +35,12 @@ const {breadcrumbL1, breadcrumbL2, breadcrumbL1Href} = Astro.props;
 		<Toaster client:load />
 		<Page
 			client:load
-			defualtSidebarOpen={defualtSidebarOpen} 
+			defaultSidebarOpen={defualtSidebarOpen} 
 			breadcrumbL1={breadcrumbL1 ?? "Scans"}
-			activeUser={{...session?.user, access_token: sessionToken ?? ""}}
+			activeUser={{...user, access_token: sessionToken ?? ""}}
 			breadcrumbL1Href={breadcrumbL1Href ?? "/"}
 			breadcrumbL2={breadcrumbL2 ?? "Results"}
-			projectData={{activeProject: null, projects}}
+			projectData={{activeProject: undefined, projects}}
 		>
 			<slot />
 		</Page>

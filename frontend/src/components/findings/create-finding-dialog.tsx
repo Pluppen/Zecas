@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState, type Dispatch, type SetStateAction} from "react";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -29,14 +28,14 @@ import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
 import { getProjectTargets } from "@/lib/api/projects";
-import { createFinding } from "@/lib/api/findings";
+import { createFinding, type Finding } from "@/lib/api/findings";
+import { type Target } from "@/lib/api/targets";
 
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -66,12 +65,12 @@ const NewFindingSchema = z.object({
     severity: z.string()
 })
 
-export default function CreateFindingDialog ({setFindings}: {setFindings: SetStateAction}) {
+export default function CreateFindingDialog ({setFindings}: {setFindings: Dispatch<SetStateAction<Finding[]>>}) {
   const $activeProjectId = useStore(activeProjectIdStore);
   const $user = useStore(user);
 
   const [open, setOpen] = useState(false);
-  const [targets, setTargets] = useState([]);
+  const [targets, setTargets] = useState<Target[]>([]);
 
   const form = useForm<z.infer<typeof NewFindingSchema>>({
     resolver: zodResolver(NewFindingSchema),
@@ -82,15 +81,15 @@ export default function CreateFindingDialog ({setFindings}: {setFindings: SetSta
   })
 
   useEffect(() => {
-    if ($activeProjectId) {
+    if ($activeProjectId && $user?.access_token) {
       getProjectTargets($activeProjectId, $user.access_token).then(targetsData => {
         setTargets(targetsData);
       });
     }
-  }, [$activeProjectId, $user])
+  }, [$activeProjectId, $user?.access_token])
 
   const onSubmit = (data: z.infer<typeof NewFindingSchema>) => {
-    if($activeProjectId) {
+    if($activeProjectId && $user?.access_token) {
         data.targets.forEach(target => {
             createFinding({
                 title: data.title,
@@ -99,7 +98,7 @@ export default function CreateFindingDialog ({setFindings}: {setFindings: SetSta
                 target_id: target.value,
                 severity: data.severity,
                 manual: true
-            }, $user.access_token).then((result) => {
+            }, $user.access_token ?? "").then((result) => {
                 if ("error" in result) {
                     toast(result.error);
                     return

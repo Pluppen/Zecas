@@ -13,13 +13,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import MultiSelect from "@/components/multi-select"
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +28,6 @@ import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -43,6 +35,7 @@ import {
 } from "@/components/ui/form"
 import { user } from "@/lib/userStore";
 import {type Service, ServiceSchema} from "@/lib/api/services"
+import {type Target } from "@/lib/api/targets"
 
 const NewServiceSchema = ServiceSchema.extend({
     targets: z.array(z.object({
@@ -52,12 +45,12 @@ const NewServiceSchema = ServiceSchema.extend({
 }).omit({target_id: true})
 type NewServiceType = z.infer<typeof NewServiceSchema>
 
-export default function CreateServiceDialog ({setServices}: {setServices: Dispatch<SetStateAction<any>>}) {
+export default function CreateServiceDialog ({setServices}: {setServices: Dispatch<SetStateAction<Service[]>>}) {
   const $activeProjectId = useStore(activeProjectIdStore);
   const $user = useStore(user);
 
   const [open, setOpen] = useState(false);
-  const [targets, setTargets] = useState([]);
+  const [targets, setTargets] = useState<Target[]>([]);
 
   const form = useForm<NewServiceType>({
     resolver: zodResolver(NewServiceSchema),
@@ -67,20 +60,19 @@ export default function CreateServiceDialog ({setServices}: {setServices: Dispat
   })
 
   useEffect(() => {
-    if($activeProjectId) {
+    if($activeProjectId && $user?.access_token) {
         getProjectTargets($activeProjectId, $user.access_token).then(result => {
             console.log(result);
             setTargets(result);
         })
     }
-  }, [$activeProjectId, $user])
+  }, [$activeProjectId, $user?.access_token])
 
   const onSubmit = (data: NewServiceType) => {
     if($activeProjectId) {
-        let rawData;
         try {
             if (data.raw_info) {
-                rawData = JSON.parse(data.raw_info);
+                JSON.parse(data.raw_info);
             }
         } catch (e) {
             const errorOpt: ErrorOption = {
@@ -102,14 +94,16 @@ export default function CreateServiceDialog ({setServices}: {setServices: Dispat
                 raw_info: data.raw_info,
                 target_id: target.value
             }
-            createService(newTarget, $user.access_token).then((result) => {
-                if ("error" in result) {
-                    toast(result.error);
-                    return
-                }
-                setServices((prev) => [...prev, result]);
-                toast(`Added new service for ${target.label}`);
-            });
+            if ($user?.access_token) {
+                createService(newTarget, $user.access_token).then((result) => {
+                    if ("error" in result) {
+                        toast(result.error);
+                        return
+                    }
+                    setServices((prev) => [...prev, result]);
+                    toast(`Added new service for ${target.label}`);
+                });
+            }
         })
         setOpen(false);
     }

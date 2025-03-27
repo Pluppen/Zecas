@@ -17,7 +17,7 @@ export const createNewProject = async (body: string, access_token: string) => {
     })    
 }
 
-export const updateProject = async (projectId: string, name: string, description: string, access_token: string) => {
+export const updateProject = async (projectId: string, name: string, description: string | undefined, access_token: string) => {
     const body = {
         name,
         description
@@ -47,7 +47,7 @@ export const deleteProject = async (projectId: string, access_token: string) => 
     })
 }
 
-export const getProjectTargets = async (projectId: string, access_token) => {
+export const getProjectTargets = async (projectId: string, access_token: string) => {
     return await callAPI(`/api/v1/projects/${projectId}/targets`, {
         method: 'GET',
         expected_status: 200,
@@ -55,7 +55,7 @@ export const getProjectTargets = async (projectId: string, access_token) => {
     })
 }
 
-export const getProjectScans = async (projectId: string, access_token) => {
+export const getProjectScans = async (projectId: string, access_token: string) => {
     return await callAPI(`/api/v1/projects/${projectId}/scans`, {
         method: 'GET',
         expected_status: 200,

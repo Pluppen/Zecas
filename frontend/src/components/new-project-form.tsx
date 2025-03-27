@@ -85,7 +85,7 @@ export default function InputForm() {
   })
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    if ($user.access_token) {
+    if ($user?.access_token) {
       let body = {
         name: data.name,
         description: data.description,

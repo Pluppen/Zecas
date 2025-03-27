@@ -3,30 +3,38 @@ import "@/styles/global.css";
 import Layout from "@/layouts/Layout.astro";
 
 import { extractSessionCookie } from "@/lib/utils";
-import {getScanById, getScanConfigById} from "@/lib/api/scans";
-import { getTargetById, getTargetFindings, getTargetServices, getTargetRelations } from "@/lib/api/targets";
-import { getProjectById, getProjectTargets } from "@/lib/api/projects";
+import { getTargetById, getTargetServices, getTargetRelations, type Target, type TargetRelation } from "@/lib/api/targets";
+import { getProjectTargets } from "@/lib/api/projects";
+import type { Service } from "@/lib/api/services";
 
 const { targetId } = Astro.params;
+
+if (!targetId) {
+    Astro.redirect("/");
+    return
+}
 
 const sessionToken = extractSessionCookie(Astro);
 const target = await getTargetById(targetId, sessionToken);
 
-const targets = await getProjectTargets(target.project_id, sessionToken);
-const targetsMap = {}
+const targets: Target[] = await getProjectTargets(target.project_id, sessionToken);
+const targetsMap: Record<string, Target> = {}
 targets.forEach(t => {
-    targetsMap[t.id] = t;
+    if (t.id) {
+        targetsMap[t.id] = t;
+    }
 })
-const findings = await getTargetFindings(targetId, sessionToken);
-const services = await getTargetServices(targetId, sessionToken);
-const servicesMap = {}
+const services: Service[] = await getTargetServices(targetId, sessionToken);
+const servicesMap: Record<string, Service> = {}
 services.forEach(s => {
-    servicesMap[s.id] = s;
+    if (s.id) {
+        servicesMap[s.id] = s;
+    }
 })
-const relations = await getTargetRelations(targetId, sessionToken); // MAp in target and service names/values as related with related prop.
+const relations: TargetRelation[] = await getTargetRelations(targetId, sessionToken);
 ---
 
-<Layout client:load breadcrumbL1="Targets" breadcrumbL2={target.value} breadcrumbL1Href="/project/targets/overview">
+<Layout breadcrumbL1="Targets" breadcrumbL2={target.value} breadcrumbL1Href="/project/targets/overview">
     <div class="container mx-auto mt-8">
         <h1 class="text-2xl mb-2">Target Information</h1>
         <p>Target: <span class="bg-muted px-1">{target.value}</span></p>
