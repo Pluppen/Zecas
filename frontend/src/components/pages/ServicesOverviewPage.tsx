@@ -6,11 +6,13 @@ import { useStore } from "@nanostores/react";
 
 import { getProjectServices, getProjectTargets } from "@/lib/api/projects";
 import { type Target } from "@/lib/api/targets";
-import { type Service } from "@/lib/api/services";
+import { type Service, deleteServiceById } from "@/lib/api/services";
 
 import { getColumns } from "@/components/services/data-table/columns";
 import { DataTable } from "@/components/findings/data-table/data-table";
 import CreateServiceDialog from "../services/create-service-dialog";
+
+import { toast } from "sonner";
 
 
 export default function ServicesOverviewPage() {
@@ -43,6 +45,22 @@ export default function ServicesOverviewPage() {
         }
     }, [$activeProjectId, $user])
 
+    const handleBulkDelete = async (selectedRows: any) => {
+        const removedServiceIds: string[] = []
+        for(let row of selectedRows) {
+            if (row.id && $user?.access_token != undefined) {
+                const resp = await deleteServiceById(row.id, $user?.access_token)
+                if ("error" in resp) {
+                    toast("Something went wrong")
+                }
+                removedServiceIds.push(row.id)
+            }
+        }
+        const newServices = services.slice().filter(t => !removedServiceIds.includes(t.id ?? ""))
+        setServices(newServices);
+        toast(`Successfully removed ${selectedRows.length} services.`)
+    }
+
     return (
         <div className="mt-4 container mx-auto ">
             <CreateServiceDialog setServices={setServices} />
@@ -51,6 +69,7 @@ export default function ServicesOverviewPage() {
                     columns={getColumns(setServices, services)}
                     data={services.map(s => ({...s, target: targetsMap[s.target_id]?.value ?? ""}))}
                     filterSettings={{placeholder: "Filter by description...", filterKey: "description"}}
+                    handleDelete={handleBulkDelete}
                 />
             </div>
         </div>

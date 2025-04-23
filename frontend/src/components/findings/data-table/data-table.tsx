@@ -28,6 +28,7 @@ import {
   } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Trash } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -36,12 +37,14 @@ interface DataTableProps<TData, TValue> {
     placeholder: string
     filterKey: string
   }
+  handleDelete: any //TODO Fix type
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  filterSettings
+  filterSettings,
+  handleDelete
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([])  
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -71,6 +74,13 @@ export function DataTable<TData, TValue>({
     },
   })
 
+  const handleDeleteSelectedRows = async () => {
+    const rows = table.getRowModel()["rowsById"];
+    const selectedRows = Object.keys(rowSelection).map(k => rows[k].original)
+    await handleDelete(selectedRows);
+    setRowSelection({});
+  }
+
   return (
     <div>
         <div className="flex items-center py-4">
@@ -82,6 +92,9 @@ export function DataTable<TData, TValue>({
             }
             className="max-w-sm"
         />
+        <Button disabled={!table.getIsSomeRowsSelected()} className="ml-2" variant={"destructive"} onClick={handleDeleteSelectedRows}>
+          <Trash />
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
