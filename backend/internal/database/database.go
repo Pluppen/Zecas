@@ -43,6 +43,8 @@ func Migrate(db *gorm.DB) error {
 		&models.User{},
 		&models.TargetRelation{},
 		&models.Service{},
+		&models.DNSRecord{},
+		&models.Certificate{},
 	)
 }
 

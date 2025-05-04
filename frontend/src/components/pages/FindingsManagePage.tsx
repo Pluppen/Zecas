@@ -63,7 +63,7 @@ export default function FindingsManagePage() {
     }
 
     return (
-        <div className="mt-8 container mx-auto ">
+        <div className="mt-8 container">
             <h1>Findings</h1>
             <CreateFindingDialog setFindings={setFindings} />
             <div className="py-10">

@@ -79,3 +79,11 @@ func (s *ProjectService) GetApplications(projectID uuid.UUID) ([]models.Applicat
 	result := s.db.Where("project_id = ?", projectID).Find(&applications)
 	return applications, result.Error
 }
+
+// GetDNSRecords returns all findings for a project
+func (s *ProjectService) GetDNSRecords(projectID uuid.UUID) ([]models.DNSRecord, error) {
+	var applications []models.DNSRecord
+	// TODO Add params to exreact the fileds linked by foreignKey
+	result := s.db.Where("project_id = ?", projectID).Find(&applications)
+	return applications, result.Error
+}

@@ -56,6 +56,18 @@ const (
 	SeverityUnknown  = "unknown"
 )
 
+// DNS Record Type enum values
+const (
+	RecordTypeA     = "A"
+	RecordTypeAAAA  = "AAAA"
+	RecordTypeCNAME = "CNAME"
+	RecordTypeANAME = "ANAME"
+	RecordTypeSOA   = "SOA"
+	RecordTypeNS    = "NS"
+	RecordTypeMX    = "MX"
+	RecordTypeTXT   = "TXT"
+)
+
 // TargetType enum values
 const (
 	TargetTypeIP     = "ip"
@@ -239,6 +251,33 @@ type ScanResults struct {
 	TargetRelations []TargetRelation `json:"target_relations,omitempty"`
 	Services        []Service        `json:"services,omitempty"`
 	Applications    []Application    `json:"applications,omitempty"`
+	DNSRecords      []DNSRecord      `json:"dns_records,omitempty"`
+	Certificates    []Certificate    `json:"certificates,omitempty"`
+}
+
+type DNSRecord struct {
+	ID           uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	ProjectID    uuid.UUID  `json:"project_id" gorm:"type:uuid;"`
+	ScanID       *uuid.UUID `json:"scan_id,omitempty" gorm:"type:uuid;"`
+	TargetID     uuid.UUID  `json:"target_id" gorm:"type:uuid;not null"`
+	RecordType   string     `json:"record_type" gorm:"type:text;not null"`
+	RecordValue  string     `json:"record_value" gorm:"type:text"`
+	Details      JSONB      `json:"details" gorm:"type:jsonb;default:'{}'::jsonb"`
+	DiscoveredAt time.Time  `json:"discovered_at" gorm:"default:CURRENT_TIMESTAMP"`
+}
+
+type Certificate struct {
+	ID            uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	ScanID        *uuid.UUID `json:"scan_id,omitempty" gorm:"type:uuid;"`
+	TargetID      uuid.UUID  `json:"target_id" gorm:"type:uuid;"`
+	ServiceID     uuid.UUID  `json:"service_id" gorm:"type:uuid;"`
+	ApplicationID uuid.UUID  `json:"application_id" gorm:"type:uuid;"`
+	ExpiresAt     time.Time  `json:"expires_at" gorm:"default:CURRENT_TIMESTAMP"`
+	IssuedAt      time.Time  `json:"issued_at" gorm:"default:CURRENT_TIMESTAMP"`
+	Details       JSONB      `json:"details" gorm:"type:jsonb;default:'{}'::jsonb"`
+	Issuer        string     `json:"issuer" gorm:"type:text;"`
+	Domain        string     `json:"domain" gorm:"type:text;"`
+	DiscoveredAt  time.Time  `json:"discovered_at" gorm:"default:CURRENT_TIMESTAMP"`
 }
 
 // Auth Related

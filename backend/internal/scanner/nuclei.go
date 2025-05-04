@@ -69,11 +69,12 @@ type NucleiClassification struct {
 func NewNucleiScanner() *NucleiScanner {
 	// Default templates directory - can be overridden in scan parameters
 	templatesDir := os.Getenv("NUCLEI_TEMPLATES_DIR")
+	log.Printf("Template dir: %s", templatesDir)
 	if templatesDir == "" {
 		// Default to ~/.nuclei-templates if not specified
 		homeDir, err := os.UserHomeDir()
 		if err == nil {
-			templatesDir = filepath.Join(homeDir, ".nuclei-templates")
+			templatesDir = filepath.Join(homeDir, "nuclei-templates")
 		} else {
 			templatesDir = "/opt/nuclei-templates" // Fallback
 		}
@@ -101,6 +102,7 @@ func (s *NucleiScanner) Initialize(ctx context.Context) error {
 	}
 
 	// Check if templates directory exists or try to update templates
+	log.Printf("Template dir: %s", s.templatesDir)
 	if _, err := os.Stat(s.templatesDir); os.IsNotExist(err) {
 		log.Println("Nuclei templates directory not found, attempting to update templates...")
 		updateCmd := exec.CommandContext(ctx, s.binPath, "-update-templates")

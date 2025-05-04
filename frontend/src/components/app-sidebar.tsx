@@ -110,27 +110,27 @@ const data = {
       items: [
         {
           title: "Overview",
-          url: "#",
+          url: "/project/inventory/overview",
         },
         {
-          title: "Ports",
-          url: "#",
-        },
-        {
-          title: "Certificates",
-          url: "#",
+          title: "Hosts",
+          url: "/project/inventory/hosts",
         },
         {
           title: "Services",
-          url: "#",
+          url: "/project/inventory/services",
         },
         {
           title: "Applications",
-          url: "#",
+          url: "/project/inventory/applications",
         },
         {
-          title: "Assets",
-          url: "#",
+          title: "DNS",
+          url: "/project/inventory/dns",
+        },
+        {
+          title: "Certificates",
+          url: "/project/inventory/certificates",
         },
       ],
     },

@@ -56,6 +56,7 @@ func main() {
 	serviceService := services.NewServiceService(db)
 	relationService := services.NewRelationService(db)
 	aplicationService := services.NewApplicationService(db)
+	dnsRecordService := services.NewDNSRecordService(db)
 
 	// Setup findings consumer
 	err = queueService.ConsumeFindings(func(finding models.Finding) error {
@@ -98,7 +99,7 @@ func main() {
 	}
 
 	// Setup router
-	router := api.SetupRouter(projectService, targetService, scanService, findingService, queueService, authService, serviceService, relationService, aplicationService)
+	router := api.SetupRouter(projectService, targetService, scanService, findingService, queueService, authService, serviceService, relationService, aplicationService, dnsRecordService)
 
 	// Start server
 	port := os.Getenv("PORT")

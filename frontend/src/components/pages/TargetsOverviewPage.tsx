@@ -13,8 +13,11 @@ import { DataTable } from "@/components/findings/data-table/data-table";
 
 import CreateTargetDialog from "@/components/targets/create-target-dialog";
 
+interface TargetsManagePageProps {
+    targetFilter?: string
+}
 
-export default function FindingsManagePage() {
+export default function TargetsManagePage({targetFilter}: TargetsManagePageProps) {
     const $activeProjectId = useStore(activeProjectIdStore);
     const [targets, setTargets] = useState<Target[]>([]);
     const $user = useStore(user);
@@ -25,7 +28,8 @@ export default function FindingsManagePage() {
                 if ("error" in targets) {
                     return
                 }
-                setTargets(targets);
+                let tmpTargets = targets.filter((t: Target) => t.target_type !== targetFilter);
+                setTargets(tmpTargets);
             });
         }
     }, [$activeProjectId, $user?.access_token])
@@ -47,7 +51,7 @@ export default function FindingsManagePage() {
     }
 
     return (
-        <div className="mt-4 container mx-auto ">
+        <div className="mt-4 container">
             <CreateTargetDialog setTargets={setTargets} />
             <div className="py-10">
                 <DataTable handleDelete={handleBulkDelete} columns={getColumns(setTargets, targets)} data={targets} filterSettings={{placeholder: "Filter by target", filterKey: "value"}} />

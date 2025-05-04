@@ -24,6 +24,7 @@ type Worker struct {
 	targetService      *services.TargetService
 	applicationService *services.ApplicationService
 	serviceService     *services.ServiceService
+	dnsRecordService   *services.DNSRecordService
 	activeScans        map[uuid.UUID]context.CancelFunc
 	workerID           string
 }
@@ -35,6 +36,7 @@ func NewWorker(
 	targetService *services.TargetService,
 	serviceService *services.ServiceService,
 	applicationService *services.ApplicationService,
+	dnsRecordService *services.DNSRecordService,
 	workerID string,
 ) *Worker {
 	return &Worker{
@@ -43,6 +45,7 @@ func NewWorker(
 		applicationService: applicationService,
 		targetService:      targetService,
 		serviceService:     serviceService,
+		dnsRecordService:   dnsRecordService,
 		activeScans:        make(map[uuid.UUID]context.CancelFunc),
 		workerID:           workerID,
 	}
@@ -91,6 +94,9 @@ func (w *Worker) Start() error {
 func (w *Worker) handleScanRequest(request services.ScanRequest) error {
 	log.Printf("[Worker %s] Processing scan request %s (type: %s)",
 		w.workerID, request.ScanID, request.ScannerType)
+
+	// TODO: Look into how to handle status on scans since its
+	// clogging up the scan queue currently.
 
 	// Update status to running
 	err := w.queueService.UpdateScanStatus(
@@ -378,6 +384,27 @@ func (w *Worker) processScanResults(results *models.ScanResults, scanID uuid.UUI
 		}
 
 		log.Printf("Created application: %s (ID: %s)", results.Applications[i].Name, results.Applications[i].ID)
+	}
+
+	for i := range results.DNSRecords {
+		// Set project ID for new dnsrecords
+		results.DNSRecords[i].ProjectID = projectID
+
+		// Set target ID for DNS record
+		results.DNSRecords[i].TargetID = targetID
+
+		// Set scan ID
+		results.DNSRecords[i].ScanID = &scanID
+
+		// Create the dnsrecord
+		// TODO: Change below to publish new dnsrecord on queue instead.
+		err := w.dnsRecordService.Create(&results.DNSRecords[i])
+		if err != nil {
+			log.Printf("Error creating dnsrecord: %v", err)
+			continue
+		}
+
+		log.Printf("Created dnsrecord: %s (ID: %s)", results.DNSRecords[i].RecordType, results.DNSRecords[i].ID)
 	}
 
 	// Process findings

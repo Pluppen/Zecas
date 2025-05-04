@@ -64,7 +64,7 @@ export default function ApplicationsOverviewPage() {
     }
 
     return (
-        <div className="mt-4 container mx-auto ">
+        <div className="mt-4 container">
             <CreateApplicationDialog setApplications={setApplications} />
             <div className="py-10">
                 <DataTable

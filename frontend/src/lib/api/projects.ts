@@ -86,3 +86,11 @@ export const getProjectApplications = async (projectId: string, access_token: st
         expected_status: 200
     })
 }
+
+export const getProjectDNSRecords = async (projectId: string, access_token: string) => {
+    return await callAPI(`/api/v1/projects/${projectId}/dns-records`, {
+        method: 'GET',
+        access_token,
+        expected_status: 200
+    })
+}

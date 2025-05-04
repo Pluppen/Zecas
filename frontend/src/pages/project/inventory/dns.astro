@@ -1,0 +1,12 @@
+---
+import "@/styles/global.css";
+import Layout from '@/layouts/Layout.astro';
+import DNSOverviewPage from "@/components/pages/DNSOverviewPage";
+---
+
+<Layout breadcrumbL1="Inventory" breadcrumbL2="DNS" breadcrumbL1Href="/project/inventory/overview">
+    <div class="">
+        <h1 class="mb-4">DNS</h1>
+        <DNSOverviewPage client:load />
+    </div>
+</Layout>
