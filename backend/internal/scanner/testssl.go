@@ -33,6 +33,10 @@ type TestSSLOutput struct {
 	Finding string `json:"finding"`
 }
 
+type TestSSLDetails struct {
+	ScanResults []TestSSLOutput `json:"scan_results"`
+}
+
 // NewTestSSLScanner creates a new TestSSL resolver scanner
 func NewTestSSLScanner() *TestSSLScanner {
 	return &TestSSLScanner{
@@ -150,6 +154,22 @@ func (s *TestSSLScanner) Scan(ctx context.Context, target interface{}, params mo
 				default:
 					continue
 				}
+			}
+
+			var testSSLDetails TestSSLDetails
+			testSSLDetails.ScanResults = outputJson
+			testSSLDetailsJSON, err := json.Marshal(testSSLDetails)
+
+			if err != nil {
+				fmt.Println("Error turning testSSLDetails to JSON")
+			}
+
+			var scanResults map[string]interface{}
+			err = json.Unmarshal(testSSLDetailsJSON, &scanResults)
+			if err != nil {
+				fmt.Println("Error turning scan results from json into generic interface: ", err)
+			} else {
+				certificate.Details = scanResults
 			}
 			certificates = append(certificates, certificate)
 		}
