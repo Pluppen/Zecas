@@ -82,8 +82,16 @@ func (s *ProjectService) GetApplications(projectID uuid.UUID) ([]models.Applicat
 
 // GetDNSRecords returns all findings for a project
 func (s *ProjectService) GetDNSRecords(projectID uuid.UUID) ([]models.DNSRecord, error) {
-	var applications []models.DNSRecord
+	var dnsRecords []models.DNSRecord
 	// TODO Add params to exreact the fileds linked by foreignKey
-	result := s.db.Where("project_id = ?", projectID).Find(&applications)
-	return applications, result.Error
+	result := s.db.Where("project_id = ?", projectID).Find(&dnsRecords)
+	return dnsRecords, result.Error
+}
+
+// GetDNSRecords returns all findings for a project
+func (s *ProjectService) GetCertificates(projectID uuid.UUID) ([]models.Certificate, error) {
+	var certificates []models.Certificate
+	// TODO Add params to exreact the fileds linked by foreignKey
+	result := s.db.Where("project_id = ?", projectID).Find(&certificates)
+	return certificates, result.Error
 }

@@ -164,7 +164,7 @@ type Application struct {
 type ScanConfig struct {
 	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	Name        string    `json:"name" gorm:"type:varchar(255);not null"`
-	ScannerType string    `json:"scanner_type" gorm:"type:varchar(50);not null;check:scanner_type IN ('nmap', 'dns', 'subdomain', 'nuclei', 'httpx')"`
+	ScannerType string    `json:"scanner_type" gorm:"type:varchar(50);not null;check:scanner_type IN ('nmap', 'dns', 'subdomain', 'nuclei', 'httpx', 'testSSL')"`
 	Parameters  JSONB     `json:"parameters" gorm:"type:jsonb;default:'{}'::jsonb"`
 	Active      bool      `json:"active" gorm:"default:true"`
 	Scans       []Scan    `json:"scans,omitempty" gorm:"foreignKey:ScanConfigID"`
@@ -268,6 +268,7 @@ type DNSRecord struct {
 
 type Certificate struct {
 	ID            uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	ProjectID     uuid.UUID  `json:"project_id" gorm:"type:uuid;"`
 	ScanID        *uuid.UUID `json:"scan_id,omitempty" gorm:"type:uuid;"`
 	TargetID      uuid.UUID  `json:"target_id" gorm:"type:uuid;"`
 	ServiceID     uuid.UUID  `json:"service_id" gorm:"type:uuid;"`

@@ -25,6 +25,7 @@ type Worker struct {
 	applicationService *services.ApplicationService
 	serviceService     *services.ServiceService
 	dnsRecordService   *services.DNSRecordService
+	certificateService *services.CertificateService
 	activeScans        map[uuid.UUID]context.CancelFunc
 	workerID           string
 }
@@ -37,6 +38,7 @@ func NewWorker(
 	serviceService *services.ServiceService,
 	applicationService *services.ApplicationService,
 	dnsRecordService *services.DNSRecordService,
+	certificateService *services.CertificateService,
 	workerID string,
 ) *Worker {
 	return &Worker{
@@ -46,6 +48,7 @@ func NewWorker(
 		targetService:      targetService,
 		serviceService:     serviceService,
 		dnsRecordService:   dnsRecordService,
+		certificateService: certificateService,
 		activeScans:        make(map[uuid.UUID]context.CancelFunc),
 		workerID:           workerID,
 	}
@@ -405,6 +408,20 @@ func (w *Worker) processScanResults(results *models.ScanResults, scanID uuid.UUI
 		}
 
 		log.Printf("Created dnsrecord: %s (ID: %s)", results.DNSRecords[i].RecordType, results.DNSRecords[i].ID)
+	}
+
+	for i := range results.Certificates {
+		results.Certificates[i].ProjectID = projectID
+		results.Certificates[i].TargetID = targetID
+		results.Certificates[i].ScanID = &scanID
+
+		err := w.certificateService.Create(&results.Certificates[i])
+		if err != nil {
+			log.Printf("Error creating dnsrecord: %v", err)
+			continue
+		}
+
+		log.Printf("Created dnsrecord: %s (ID: %s)", results.Certificates[i].Domain, results.Certificates[i].ID)
 	}
 
 	// Process findings

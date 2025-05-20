@@ -21,6 +21,7 @@ func SetupRouter(
 	relationService *services.RelationService,
 	applicationService *services.ApplicationService,
 	dnsRecordService *services.DNSRecordService,
+	certificateService *services.CertificateService,
 ) *gin.Engine {
 	// Create router with default logger and recovery middleware
 	router := gin.Default()
@@ -43,6 +44,7 @@ func SetupRouter(
 	relationHandler := handlers.NewRelationHandler(relationService, targetService)
 	applicationHandler := handlers.NewApplicationHandler(applicationService, projectService, targetService, serviceService)
 	dnsRecordHandler := handlers.NewDNSRecordHandler(dnsRecordService)
+	certificateHandler := handlers.NewCertificateHandler(certificateService)
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
@@ -70,6 +72,7 @@ func SetupRouter(
 			projects.GET("/:id/services", projectHandler.GetProjectServices)
 			projects.GET("/:id/applications", projectHandler.GetProjectApplications)
 			projects.GET("/:id/dns-records", projectHandler.GetProjectDNSRecords)
+			projects.GET("/:id/certificates", projectHandler.GetProjectCertificates)
 		}
 
 		// Targets
@@ -164,6 +167,16 @@ func SetupRouter(
 			dnsRecords.GET("/:id", dnsRecordHandler.GetDNSRecord)
 			dnsRecords.PUT("/:id", dnsRecordHandler.UpdateDNSRecord)
 			dnsRecords.DELETE("/:id", dnsRecordHandler.DeleteDNSRecord)
+		}
+
+		// DNS Records
+		certificates := v1.Group("/certificates")
+		{
+			certificates.GET("", certificateHandler.GetCertificates)
+			certificates.POST("", certificateHandler.CreateCertificate)
+			certificates.GET("/:id", certificateHandler.GetCertificate)
+			certificates.PUT("/:id", certificateHandler.UpdateCertificate)
+			certificates.DELETE("/:id", certificateHandler.DeleteCertificate)
 		}
 	}
 

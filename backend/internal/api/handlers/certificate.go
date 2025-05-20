@@ -102,6 +102,7 @@ func (h *CertificateHandler) GetCertificate(c *gin.Context) {
 func (h *CertificateHandler) CreateCertificate(c *gin.Context) {
 	var input struct {
 		ScanID        *string      `json:"scan_id"`
+		ProjectID     string       `json:"project_id" binding:"required"`
 		TargetID      *string      `json:"target_id"`
 		ServiceID     *string      `json:"service_id"`
 		ApplicationID *string      `json:"application_id"`
@@ -130,6 +131,7 @@ func (h *CertificateHandler) CreateCertificate(c *gin.Context) {
 	var err error
 	var targetID uuid.UUID
 	var serviceID uuid.UUID
+	var projectID uuid.UUID
 	var applicationID uuid.UUID
 
 	if input.TargetID != nil {
@@ -156,8 +158,15 @@ func (h *CertificateHandler) CreateCertificate(c *gin.Context) {
 		}
 	}
 
+	projectID, err = uuid.Parse(input.ProjectID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID format"})
+		return
+	}
+
 	certificate := &models.Certificate{
 		ScanID:        scanID,
+		ProjectID:     projectID,
 		TargetID:      targetID,
 		ServiceID:     serviceID,
 		ApplicationID: applicationID,

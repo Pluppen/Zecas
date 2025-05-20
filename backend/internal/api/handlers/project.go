@@ -388,3 +388,31 @@ func (h *ProjectHandler) GetProjectServices(c *gin.Context) {
 
 	c.JSON(http.StatusOK, services)
 }
+
+// GetProjectCertificates gets all certificates for a project
+// @Summary Get project certificates
+// @Description Get all certificates for a specific project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID"
+// @Success 200 {array} models.Certificates
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/projects/{id}/certificates [get]
+func (h *ProjectHandler) GetProjectCertificates(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID format"})
+		return
+	}
+
+	certificates, err := h.projectService.GetCertificates(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve certificates"})
+		return
+	}
+
+	c.JSON(http.StatusOK, certificates)
+}

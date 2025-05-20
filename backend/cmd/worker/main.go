@@ -72,6 +72,7 @@ func main() {
 	serviceService := services.NewServiceService(db)
 	applicationService := services.NewApplicationService(db)
 	dnsRecordService := services.NewDNSRecordService(db)
+	certificateService := services.NewCertificateService(db)
 
 	// Initialize scanner registry
 	scannerRegistry := scanner.NewRegistry()
@@ -91,6 +92,9 @@ func main() {
 	httpxScanner := scanner.NewHTTPXScanner()
 	scannerRegistry.Register("httpx", httpxScanner)
 
+	testSSLScanner := scanner.NewTestSSLScanner()
+	scannerRegistry.Register("testSSL", testSSLScanner)
+
 	// Create and start the worker
 	scanWorker := worker.NewWorker(
 		queueService,
@@ -99,6 +103,7 @@ func main() {
 		serviceService,
 		applicationService,
 		dnsRecordService,
+		certificateService,
 		*workerID,
 	)
 

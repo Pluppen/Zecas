@@ -43,6 +43,7 @@ const SCANNER_TYPES: ScannerType[] = [
     "dns",
     "subdomain",
     "nuclei",
+    "testSSL",
     "httpx"
 ]
 

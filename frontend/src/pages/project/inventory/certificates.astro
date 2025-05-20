@@ -1,0 +1,12 @@
+---
+import "@/styles/global.css";
+import Layout from '@/layouts/Layout.astro';
+import CertificateOverviewPage from "@/components/pages/CertificateOverviewPage";
+---
+
+<Layout breadcrumbL1="Inventory" breadcrumbL2="Certificates" breadcrumbL1Href="/project/inventory/overview">
+    <div class="">
+        <h1 class="mb-4">Certificates</h1>
+        <CertificateOverviewPage client:load />
+    </div>
+</Layout>

@@ -44,6 +44,7 @@ const SCANNER_TYPES: ScannerType[] = [
     "dns",
     "subdomain",
     "nuclei",
+    "testSSL",
     "httpx"
 ]
 
@@ -102,7 +103,7 @@ export default function CreateScanConfigDialog ({setScanConfigs}: {setScanConfig
                 return
             }
             setScanConfigs((prev) => [...prev, result]);
-            toast("Added new finding successfully!");
+            toast("Added new scan config successfully!");
         });
         setOpen(false);
     }

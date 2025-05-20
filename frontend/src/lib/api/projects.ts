@@ -94,3 +94,11 @@ export const getProjectDNSRecords = async (projectId: string, access_token: stri
         expected_status: 200
     })
 }
+
+export const getProjectCertificates = async (projectId: string, access_token: string) => {
+    return await callAPI(`/api/v1/projects/${projectId}/certificates`, {
+        method: 'GET',
+        access_token,
+        expected_status: 200
+    })
+}
