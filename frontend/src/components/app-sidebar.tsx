@@ -86,7 +86,7 @@ const data = {
         },
       ],
     },
-    {
+    /*{
       title: "Report",
       url: "#",
       icon: BookOpen,
@@ -101,7 +101,7 @@ const data = {
           url: "#",
         },
       ],
-    },
+    },*/
     {
       title: "Inventory",
       url: "#",
