@@ -4,30 +4,29 @@ import {user} from "@/lib/userStore";
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import { getProjectServices, getProjectTargets } from "@/lib/api/projects";
+import { getProjectDNSRecords, getProjectTargets } from "@/lib/api/projects";
 import { type Target } from "@/lib/api/targets";
-import { type Service, deleteServiceById } from "@/lib/api/services";
+import { type DNSRecord, deleteDNSRecordById } from "@/lib/api/dns";
 
-import { getColumns } from "@/components/services/data-table/columns";
+import { getColumns } from "@/components/dnsRecords/data-table/columns";
 import { DataTable } from "@/components/findings/data-table/data-table";
-import CreateServiceDialog from "../services/create-service-dialog";
 
 import { toast } from "sonner";
 
 
-export default function ServicesOverviewPage() {
+export default function DNSOverviewPage() {
     const $activeProjectId = useStore(activeProjectIdStore);
-    const [services, setServices] = useState<Service[]>([]);
+    const [dnsRecords, setDNSRecords] = useState<DNSRecord[]>([]);
     const [targetsMap, setTargetsMap] = useState<Record<string, Target>>({});
     const $user = useStore(user);
 
     useEffect(() => {
         if($activeProjectId && $user?.access_token) {
-            getProjectServices($activeProjectId, $user.access_token).then(services => {
-                if ("error" in services) {
+            getProjectDNSRecords($activeProjectId, $user.access_token).then(dnsRecords => {
+                if ("error" in dnsRecords) {
                     return
                 }
-                setServices(services);
+                setDNSRecords(dnsRecords);
             })
 
             getProjectTargets($activeProjectId, $user.access_token).then(result => {
@@ -46,29 +45,28 @@ export default function ServicesOverviewPage() {
     }, [$activeProjectId, $user])
 
     const handleBulkDelete = async (selectedRows: any) => {
-        const removedServiceIds: string[] = []
+        const removedDNSRecordIds: string[] = []
         for(let row of selectedRows) {
             if (row.id && $user?.access_token != undefined) {
-                const resp = await deleteServiceById(row.id, $user?.access_token)
+                const resp = await deleteDNSRecordById(row.id, $user?.access_token)
                 if ("error" in resp) {
                     toast("Something went wrong")
                 }
-                removedServiceIds.push(row.id)
+                removedDNSRecordIds.push(row.id)
             }
         }
-        const newServices = services.slice().filter(t => !removedServiceIds.includes(t.id ?? ""))
-        setServices(newServices);
-        toast(`Successfully removed ${selectedRows.length} services.`)
+        const newDNSRecords = dnsRecords.slice().filter(t => !removedDNSRecordIds.includes(t.id ?? ""))
+        setDNSRecords(newDNSRecords);
+        toast(`Successfully removed ${selectedRows.length} DNS Records.`)
     }
 
     return (
         <div className="mt-4 container">
-            <CreateServiceDialog setServices={setServices} />
             <div className="py-10">
                 <DataTable
-                    columns={getColumns(setServices, services)}
-                    data={services.map(s => ({...s, target: targetsMap[s.target_id]?.value ?? ""}))}
-                    filterSettings={{placeholder: "Filter by description...", filterKey: "description"}}
+                    columns={getColumns(setDNSRecords, dnsRecords)}
+                    data={dnsRecords.map(dnsRecord => ({...dnsRecord, target: targetsMap[dnsRecord.target_id]?.value ?? "Unknown"}))}
+                    filterSettings={{placeholder: "Filter by target", filterKey: "target"}}
                     handleDelete={handleBulkDelete}
                 />
             </div>

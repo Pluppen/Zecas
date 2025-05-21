@@ -111,7 +111,7 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 		}
 	}
 
-	var dnsRecords = make(map[DNSRecordType][]string)
+	var dnsRecords []models.DNSRecord
 	var findings []models.Finding
 
 	if isIP {
@@ -130,8 +130,6 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 			}
 			findings = append(findings, finding)
 		} else {
-			dnsRecords[RecordTypePTR] = names
-
 			// Create targets for PTR records
 			for _, name := range names {
 				// Standardize name format (remove trailing dot)
@@ -218,6 +216,12 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 								},
 							}
 							scanResults.TargetRelations = append(scanResults.TargetRelations, relation)
+
+							dnsRecord := models.DNSRecord{
+								RecordType:  (string)(recordType),
+								RecordValue: ip,
+							}
+							dnsRecords = append(dnsRecords, dnsRecord)
 						}
 					}
 				}
@@ -225,8 +229,14 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 				// Filter only IPv6 addresses
 				ips, err := net.LookupIP(targetValue)
 				if err == nil {
+
 					for _, ip := range ips {
 						if ip.To4() == nil { // IPv6 addresses have To4() == nil
+							dnsRecord := models.DNSRecord{
+								RecordType:  (string)(recordType),
+								RecordValue: ip.String(),
+							}
+							dnsRecords = append(dnsRecords, dnsRecord)
 							records = append(records, ip.String())
 						}
 					}
@@ -263,6 +273,12 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 						},
 					}
 					scanResults.TargetRelations = append(scanResults.TargetRelations, relation)
+
+					dnsRecord := models.DNSRecord{
+						RecordType:  (string)(recordType),
+						RecordValue: cname,
+					}
+					dnsRecords = append(dnsRecords, dnsRecord)
 				}
 			case RecordTypeMX:
 				mxs, err := net.LookupMX(targetValue)
@@ -299,12 +315,25 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 							},
 						}
 						scanResults.TargetRelations = append(scanResults.TargetRelations, relation)
+
+						dnsRecord := models.DNSRecord{
+							RecordType:  (string)(recordType),
+							RecordValue: fmt.Sprintf("%s (priority: %d)", mxHost, mx.Pref),
+						}
+						dnsRecords = append(dnsRecords, dnsRecord)
 					}
 				}
 			case RecordTypeTXT:
 				txts, err := net.LookupTXT(targetValue)
 				if err == nil {
 					records = txts
+					for _, txt := range txts {
+						dnsRecord := models.DNSRecord{
+							RecordType:  (string)(recordType),
+							RecordValue: txt,
+						}
+						dnsRecords = append(dnsRecords, dnsRecord)
+					}
 				}
 			case RecordTypeNS:
 				nss, err := net.LookupNS(targetValue)
@@ -339,6 +368,12 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 							},
 						}
 						scanResults.TargetRelations = append(scanResults.TargetRelations, relation)
+
+						dnsRecord := models.DNSRecord{
+							RecordType:  (string)(recordType),
+							RecordValue: nsHost,
+						}
+						dnsRecords = append(dnsRecords, dnsRecord)
 					}
 				}
 			case RecordTypeSOA:
@@ -349,6 +384,11 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 					outputStr := strings.TrimSpace(string(output))
 					if outputStr != "" {
 						records = []string{outputStr}
+						dnsRecord := models.DNSRecord{
+							RecordType:  (string)(recordType),
+							RecordValue: outputStr,
+						}
+						dnsRecords = append(dnsRecords, dnsRecord)
 					}
 				}
 			}
@@ -369,8 +409,6 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 				findings = append(findings, finding)
 			} else {
 				// Records found
-				dnsRecords[recordType] = records
-
 				finding := models.Finding{
 					Title:       fmt.Sprintf("%s records for %s", recordType, targetValue),
 					Description: s.generateRecordDescription(targetValue, recordType, records),
@@ -386,22 +424,8 @@ func (s *DNSScanner) Scan(ctx context.Context, target interface{}, params models
 			}
 		}
 	}
-
-	// Create summary finding with all DNS information
-	summary := models.Finding{
-		Title:       fmt.Sprintf("DNS records for %s", targetValue),
-		Description: s.generateSummaryDescription(targetValue, dnsRecords, isIP),
-		Severity:    models.SeverityInfo,
-		FindingType: "dns_summary",
-		Details: models.JSONB{
-			"target":  targetValue,
-			"is_ip":   isIP,
-			"records": dnsRecords,
-		},
-	}
-	findings = append(findings, summary)
-
 	scanResults.Findings = findings
+	scanResults.DNSRecords = dnsRecords
 	return scanResults, nil
 }
 

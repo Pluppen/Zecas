@@ -4,30 +4,29 @@ import {user} from "@/lib/userStore";
 import { activeProjectIdStore } from "@/lib/projectsStore";
 import { useStore } from "@nanostores/react";
 
-import { getProjectServices, getProjectTargets } from "@/lib/api/projects";
+import { getProjectCertificates, getProjectTargets } from "@/lib/api/projects";
 import { type Target } from "@/lib/api/targets";
-import { type Service, deleteServiceById } from "@/lib/api/services";
+import { type Certificate, deleteCertificateById } from "@/lib/api/certificates";
 
-import { getColumns } from "@/components/services/data-table/columns";
+import { getColumns } from "@/components/certificates/data-table/columns";
 import { DataTable } from "@/components/findings/data-table/data-table";
-import CreateServiceDialog from "../services/create-service-dialog";
 
 import { toast } from "sonner";
 
 
-export default function ServicesOverviewPage() {
+export default function CertificateOverviewPage() {
     const $activeProjectId = useStore(activeProjectIdStore);
-    const [services, setServices] = useState<Service[]>([]);
+    const [certificates, setCertificates] = useState<Certificate[]>([]);
     const [targetsMap, setTargetsMap] = useState<Record<string, Target>>({});
     const $user = useStore(user);
 
     useEffect(() => {
         if($activeProjectId && $user?.access_token) {
-            getProjectServices($activeProjectId, $user.access_token).then(services => {
-                if ("error" in services) {
+            getProjectCertificates($activeProjectId, $user.access_token).then(certificates => {
+                if ("error" in certificates) {
                     return
                 }
-                setServices(services);
+                setCertificates(certificates);
             })
 
             getProjectTargets($activeProjectId, $user.access_token).then(result => {
@@ -46,29 +45,28 @@ export default function ServicesOverviewPage() {
     }, [$activeProjectId, $user])
 
     const handleBulkDelete = async (selectedRows: any) => {
-        const removedServiceIds: string[] = []
+        const removedCertificateIds: string[] = []
         for(let row of selectedRows) {
             if (row.id && $user?.access_token != undefined) {
-                const resp = await deleteServiceById(row.id, $user?.access_token)
+                const resp = await deleteCertificateById(row.id, $user?.access_token)
                 if ("error" in resp) {
                     toast("Something went wrong")
                 }
-                removedServiceIds.push(row.id)
+                removedCertificateIds.push(row.id)
             }
         }
-        const newServices = services.slice().filter(t => !removedServiceIds.includes(t.id ?? ""))
-        setServices(newServices);
-        toast(`Successfully removed ${selectedRows.length} services.`)
+        const newCertificates = certificates.slice().filter(t => !removedCertificateIds.includes(t.id ?? ""))
+        setCertificates(newCertificates);
+        toast(`Successfully removed ${selectedRows.length} certificates.`)
     }
 
     return (
         <div className="mt-4 container">
-            <CreateServiceDialog setServices={setServices} />
             <div className="py-10">
                 <DataTable
-                    columns={getColumns(setServices, services)}
-                    data={services.map(s => ({...s, target: targetsMap[s.target_id]?.value ?? ""}))}
-                    filterSettings={{placeholder: "Filter by description...", filterKey: "description"}}
+                    columns={getColumns(setCertificates, certificates)}
+                    data={certificates.map(certificate => ({...certificate, target: targetsMap[certificate.target_id]?.value ?? "Unknown"}))}
+                    filterSettings={{placeholder: "Filter by target", filterKey: "target"}}
                     handleDelete={handleBulkDelete}
                 />
             </div>

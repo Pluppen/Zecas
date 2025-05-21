@@ -1,0 +1,34 @@
+---
+import "@/styles/global.css";
+import Layout from "@/layouts/Layout.astro";
+
+import { extractSessionCookie } from "@/lib/utils";
+import {getCertificate, type Certificate} from "@/lib/api/certificates";
+import { getTargetById } from "@/lib/api/targets";
+
+const { certificateId } = Astro.params;
+
+if (!certificateId) {
+    Astro.redirect("/");
+    return
+}
+
+const sessionToken = extractSessionCookie(Astro);
+const certificate: Certificate = await getCertificate(certificateId, sessionToken)
+const target = await getTargetById(certificate.target_id, sessionToken);
+---
+
+<Layout breadcrumbL1="Certificates" breadcrumbL2={certificate.domain} breadcrumbL1Href="/project/targets/certificates">
+    <div class="container mx-auto mt-8">
+        <h1 class="text-2xl mb-2">Certificate for {certificate.domain}</h1>
+        <p>Target: {target.value}</p>
+
+        <p>Issued By: {certificate.issuer}</p>
+        <p>Used for: {certificate.domain}</p>
+        <p>Expires: {certificate.expires_at}</p>
+        <p>Issued: {certificate.issued_at}</p>
+
+        <p class="mt-4">Raw info:</p>
+        <pre class="bg-muted p-4 text-wrap">{JSON.stringify({certificate}, null, 2)}</pre>
+    </div>
+</Layout>

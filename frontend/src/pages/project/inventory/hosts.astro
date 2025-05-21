@@ -1,0 +1,12 @@
+---
+import "@/styles/global.css";
+import Layout from '@/layouts/Layout.astro';
+import TargetsOverviewPage from '@/components/pages/TargetsOverviewPage'
+---
+
+<Layout breadcrumbL1="Inventory" breadcrumbL2="Hosts" breadcrumbL1Href="/project/inventory/overview">
+    <div class="">
+        <h1 class="mb-4">Hosts</h1>
+        <TargetsOverviewPage client:load targetFilter="domain" />
+    </div>
+</Layout>

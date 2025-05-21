@@ -99,6 +99,8 @@ func (h *TargetHandler) CreateTarget(c *gin.Context) {
 		return
 	}
 
+	// SECURITY TODO: Add validation based on the different target values to make sure it is a valid domain, cidr or IP.
+
 	projectID, err := uuid.Parse(input.ProjectID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID format"})

@@ -39,7 +39,7 @@ export default function ScanConfigOverviewPage(props: ScanConfigOverviewPageProp
     }, [editDialogOpen])
 
     return (
-        <div className="w-2/3">
+        <div className="container">
             <h1 className="mb-4">Scan Configs</h1>
             <CreateScanConfigDialog setScanConfigs={setScanConfigs} />
             {scanConfig ? <EditScanConfigDialog

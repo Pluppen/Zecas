@@ -1,0 +1,31 @@
+---
+import "@/styles/global.css";
+import Layout from "@/layouts/Layout.astro";
+
+import { extractSessionCookie } from "@/lib/utils";
+import {getDNSRecord, type DNSRecord} from "@/lib/api/dns";
+import { getTargetById } from "@/lib/api/targets";
+
+const { dnsId } = Astro.params;
+
+if (!dnsId) {
+    Astro.redirect("/");
+    return
+}
+
+const sessionToken = extractSessionCookie(Astro);
+const dnsRecord: DNSRecord = await getDNSRecord(dnsId, sessionToken)
+const target = await getTargetById(dnsRecord.target_id, sessionToken);
+---
+
+<Layout breadcrumbL1="DNS Record" breadcrumbL2={dnsRecord.record_value} breadcrumbL1Href="/project/dns">
+    <div class="container mx-auto mt-8">
+        <h1 class="text-2xl mb-2">DNS Record</h1>
+        <p>Target: {target.value}</p>
+        <p>Record Type: {dnsRecord.record_type}</p>
+        <p>Record Value: {dnsRecord.record_value}</p>
+
+        <p class="mt-4">Raw info:</p>
+        <pre class="bg-muted p-4 text-wrap">{JSON.stringify({dnsRecord}, null, 2)}</pre>
+    </div>
+</Layout>
