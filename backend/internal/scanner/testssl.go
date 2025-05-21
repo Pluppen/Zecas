@@ -11,12 +11,9 @@ import (
 	"io"
 	"time"
 
-	//"net"
 	"os"
 	"os/exec"
 	"strings"
-	//"time"
-	//"github.com/google/uuid"
 )
 
 type TestSSLScanner struct {
